@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function Header() {
   return (
@@ -33,29 +35,68 @@ export function Header() {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Login</DialogTitle>
-              <DialogDescription>
-                Enter your credentials to access your account.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input id="email" type="email" placeholder="m@example.com" className="col-span-3" />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="password" className="text-right">
-                  Password
-                </Label>
-                <Input id="password" type="password" className="col-span-3" />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="submit">Login</Button>
-            </DialogFooter>
+            <Tabs defaultValue="login">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Connexion</TabsTrigger>
+                <TabsTrigger value="signup">Inscription</TabsTrigger>
+              </TabsList>
+              <TabsContent value="login">
+                <DialogHeader>
+                  <DialogTitle>Connexion</DialogTitle>
+                  <DialogDescription>
+                    Entrez vos identifiants pour accéder à votre compte.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email-login" className="text-right">
+                      Email
+                    </Label>
+                    <Input id="email-login" type="email" placeholder="m@example.com" className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password-login" className="text-right">
+                      Mot de passe
+                    </Label>
+                    <Input id="password-login" type="password" className="col-span-3" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Se connecter</Button>
+                </DialogFooter>
+              </TabsContent>
+              <TabsContent value="signup">
+                <DialogHeader>
+                  <DialogTitle>Inscription</DialogTitle>
+                  <DialogDescription>
+                    Créez un compte pour commencer.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email-signup" className="text-right">
+                      Email
+                    </Label>
+                    <Input id="email-signup" type="email" placeholder="m@example.com" className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="password-signup" className="text-right">
+                      Mot de passe
+                    </Label>
+                    <Input id="password-signup" type="password" className="col-span-3" />
+                  </div>
+                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="confirm-password-signup" className="text-right">
+                      Confirmer
+                    </Label>
+                    <Input id="confirm-password-signup" type="password" className="col-span-3" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">S'inscrire</Button>
+                </DialogFooter>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </nav>

@@ -118,15 +118,17 @@ export function Header() {
         <span className="font-bold">Black Void</span>
       </Link>
       <nav className="ml-auto flex gap-4 sm:gap-6">
-        <Button variant="outline" size="icon">
-          <Plus className="h-4 w-4" />
-        </Button>
         {!loading && (
           <>
             {user ? (
-              <Button variant="outline" size="icon" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <>
+                <Button variant="outline" size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </>
             ) : (
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>

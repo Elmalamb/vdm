@@ -1,8 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { onAuthStateChanged, type User, getIdTokenResult } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -25,10 +26,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        // Force refresh to get latest claims
-        const tokenResult = await getIdTokenResult(user, true);
-        const claims = tokenResult.claims;
-        setIsModerator(!!claims.moderator);
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && userDoc.data().role === 'moderateur') {
+          setIsModerator(true);
+        } else {
+          setIsModerator(false);
+        }
       } else {
         setUser(null);
         setIsModerator(false);

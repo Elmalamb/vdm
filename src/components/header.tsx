@@ -19,8 +19,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -71,7 +72,15 @@ export function Header() {
 
   const onSignupSubmit = async (values: z.infer<typeof signupSchema>) => {
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+      
+      // Create user document in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        role: "membre",
+      });
+
       toast({ title: "Inscription réussie.", description: "Vous pouvez maintenant vous connecter." });
       setIsDialogOpen(false);
       signupForm.reset();
@@ -153,7 +162,7 @@ export function Header() {
                               </FormItem>
                             )}
                           />
-                          <DialogFooter className="justify-center pt-2">
+                          <DialogFooter className="flex-col sm:flex-col sm:justify-center pt-2">
                             <Button type="submit" className="bg-black text-white hover:bg-black/80">Se connecter</Button>
                           </DialogFooter>
                         </form>
@@ -186,7 +195,7 @@ export function Header() {
                               </FormItem>
                             )}
                           />
-                          <DialogFooter className="justify-center pt-2">
+                          <DialogFooter className="flex-col sm:flex-col sm:justify-center pt-2">
                             <Button type="submit" className="bg-black text-white hover:bg-black/80">S'inscrire</Button>
                           </DialogFooter>
                         </form>

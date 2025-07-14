@@ -1,14 +1,18 @@
+
 "use client";
 
 import { useState, useEffect, useRef, type FC } from 'react';
-import { Settings, Maximize, Minimize, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, Maximize, Minimize, Zap, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/use-auth';
 
 const BlackVoidPage: FC = () => {
+  const { isModerator } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isWakeLockActive, setIsWakeLockActive] = useState<boolean>(false);
   const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
@@ -72,7 +76,18 @@ const BlackVoidPage: FC = () => {
   }
 
   return (
-    <div className="flex-1 w-full bg-background flex items-center justify-center transition-colors duration-500">
+    <div className="flex-1 w-full bg-background flex items-center justify-center transition-colors duration-500 p-4">
+      <div className="absolute top-20 text-center">
+        {isModerator && (
+          <Button asChild>
+            <Link href="/moderation">
+              <ShieldAlert className="mr-2 h-4 w-4" />
+              Accéder au tableau de bord Modérateur
+            </Link>
+          </Button>
+        )}
+      </div>
+
       <Popover>
         <PopoverTrigger asChild>
           <Button

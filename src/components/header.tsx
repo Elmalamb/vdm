@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -19,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword, signOut, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
@@ -97,7 +98,11 @@ export function Header() {
       signupForm.reset();
     } catch (error) {
       console.error("Erreur d'inscription:", error);
-      toast({ title: "Erreur d'inscription", description: "Cette adresse e-mail est peut-être déjà utilisée.", variant: "destructive" });
+      if ((error as AuthError).code === 'auth/email-already-in-use') {
+        toast({ title: "Erreur d'inscription", description: "Cette adresse e-mail est déjà utilisée.", variant: "destructive" });
+      } else {
+        toast({ title: "Erreur d'inscription", description: "Une erreur s'est produite lors de l'inscription.", variant: "destructive" });
+      }
     }
   };
 

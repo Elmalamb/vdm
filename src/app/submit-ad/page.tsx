@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2, Film, ImageIcon } from "lucide-react";
 
@@ -127,15 +127,13 @@ export default function SubmitAdPage() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Image Preview */}
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="image"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image de présentation</FormLabel>
                       <FormControl>
                         <div className="w-full aspect-square bg-muted rounded-md flex items-center justify-center overflow-hidden">
                           {imagePreview ? (
@@ -143,7 +141,7 @@ export default function SubmitAdPage() {
                           ) : (
                              <div className="text-muted-foreground flex flex-col items-center">
                                <ImageIcon className="h-16 w-16" />
-                               <span className="mt-2 text-sm">Aperçu de l'image</span>
+                               <span className="mt-2 text-sm">Image de présentation</span>
                              </div>
                           )}
                         </div>
@@ -154,13 +152,11 @@ export default function SubmitAdPage() {
                   )}
                 />
                 
-                {/* Video Preview */}
                 <FormField
                   control={form.control}
                   name="video"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Vidéo de démonstration (2 min max)</FormLabel>
                        <FormControl>
                         <div className="w-full aspect-square bg-muted rounded-md flex items-center justify-center overflow-hidden">
                           {videoPreview ? (
@@ -168,7 +164,7 @@ export default function SubmitAdPage() {
                           ) : (
                             <div className="text-muted-foreground flex flex-col items-center">
                                <Film className="h-16 w-16" />
-                               <span className="mt-2 text-sm">Aperçu de la vidéo</span>
+                               <span className="mt-2 text-sm">Vidéo (2min max)</span>
                              </div>
                           )}
                         </div>
@@ -185,24 +181,22 @@ export default function SubmitAdPage() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Titre de l'annonce</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Vélo de montagne quasi neuf" {...field} />
+                      <Input placeholder="Titre de l'annonce" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prix</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="150" {...field} />
+                        <Input type="number" placeholder="Prix (€)" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -213,9 +207,8 @@ export default function SubmitAdPage() {
                   name="postalCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Code Postal</FormLabel>
                       <FormControl>
-                        <Input placeholder="75001" {...field} />
+                        <Input placeholder="Code Postal" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

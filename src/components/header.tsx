@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Package2, Plus } from 'lucide-react';
+import { LogIn, Package2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Header() {
@@ -12,6 +12,9 @@ export function Header() {
       <nav className="ml-auto flex gap-4 sm:gap-6">
         <Button variant="outline" size="icon">
           <Plus className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon">
+          <LogIn className="h-4 w-4" />
         </Button>
       </nav>
     </header>

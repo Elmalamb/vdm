@@ -14,7 +14,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function Header() {
@@ -52,7 +51,7 @@ export function Header() {
                   <Input id="password-login" type="password" placeholder="Mot de passe" />
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Se connecter</Button>
+                  <Button type="submit" className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90">Se connecter</Button>
                 </DialogFooter>
               </TabsContent>
               <TabsContent value="signup">
@@ -62,7 +61,7 @@ export function Header() {
                   <Input id="confirm-password-signup" type="password" placeholder="Confirmer le mot de passe" />
                 </div>
                 <DialogFooter>
-                  <Button type="submit">S'inscrire</Button>
+                  <Button type="submit" className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90">S'inscrire</Button>
                 </DialogFooter>
               </TabsContent>
             </Tabs>

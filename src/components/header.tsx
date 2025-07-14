@@ -41,13 +41,7 @@ export function Header() {
                 <TabsTrigger value="signup">Inscription</TabsTrigger>
               </TabsList>
               <TabsContent value="login">
-                <DialogHeader>
-                  <DialogTitle>Connexion</DialogTitle>
-                  <DialogDescription>
-                    Entrez vos identifiants pour accéder à votre compte.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4 pt-8">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="email-login" className="text-right">
                       Email

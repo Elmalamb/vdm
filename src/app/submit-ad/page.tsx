@@ -120,15 +120,15 @@ export default function SubmitAdPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <Card className="max-w-3xl mx-auto">
+      <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <CardTitle>Soumettre une annonce</CardTitle>
           <CardDescription>Remplissez les informations ci-dessous pour publier votre annonce.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="image"
@@ -189,7 +189,7 @@ export default function SubmitAdPage() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="price"

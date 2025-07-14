@@ -48,18 +48,8 @@ export function Header() {
               </TabsList>
               <TabsContent value="login">
                 <div className="grid gap-4 py-4 pt-8">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email-login" className="text-right">
-                      Email
-                    </Label>
-                    <Input id="email-login" type="email" placeholder="m@example.com" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password-login" className="text-right">
-                      Mot de passe
-                    </Label>
-                    <Input id="password-login" type="password" className="col-span-3" />
-                  </div>
+                  <Input id="email-login" type="email" placeholder="Email" />
+                  <Input id="password-login" type="password" placeholder="Mot de passe" />
                 </div>
                 <DialogFooter>
                   <Button type="submit">Se connecter</Button>
@@ -67,24 +57,9 @@ export function Header() {
               </TabsContent>
               <TabsContent value="signup">
                 <div className="grid gap-4 py-4 pt-8">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email-signup" className="text-right">
-                      Email
-                    </Label>
-                    <Input id="email-signup" type="email" placeholder="m@example.com" className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password-signup" className="text-right">
-                      Mot de passe
-                    </Label>
-                    <Input id="password-signup" type="password" className="col-span-3" />
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="confirm-password-signup" className="text-right">
-                      Confirmer
-                    </Label>
-                    <Input id="confirm-password-signup" type="password" className="col-span-3" />
-                  </div>
+                  <Input id="email-signup" type="email" placeholder="Email" />
+                  <Input id="password-signup" type="password" placeholder="Mot de passe" />
+                  <Input id="confirm-password-signup" type="password" placeholder="Confirmer le mot de passe" />
                 </div>
                 <DialogFooter>
                   <Button type="submit">S'inscrire</Button>

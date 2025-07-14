@@ -127,8 +127,10 @@ export function Header() {
           <>
             {user ? (
               <>
-                <Button variant="outline" size="icon">
-                  <Plus className="h-4 w-4" />
+                <Button asChild variant="outline" size="icon">
+                  <Link href="/submit-ad">
+                    <Plus className="h-4 w-4" />
+                  </Link>
                 </Button>
                 <Button variant="outline" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />

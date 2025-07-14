@@ -58,7 +58,6 @@ export function Header() {
                 <div className="grid gap-4 py-4 pt-8">
                   <Input id="email-signup" type="email" placeholder="Email" />
                   <Input id="password-signup" type="password" placeholder="Mot de passe" />
-                  <Input id="confirm-password-signup" type="password" placeholder="Confirmer le mot de passe" />
                 </div>
                 <DialogFooter className="justify-center">
                   <Button type="submit" className="bg-black text-white hover:bg-black/80">S'inscrire</Button>

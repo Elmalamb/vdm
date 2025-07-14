@@ -2,8 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -26,13 +25,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists() && userDoc.data().role === 'moderateur') {
-          setIsModerator(true);
-        } else {
-          setIsModerator(false);
-        }
+        // Get the user's ID token result to check for custom claims
+        const idTokenResult = await user.getIdTokenResult();
+        // Check if the 'moderator' custom claim is true
+        setIsModerator(!!idTokenResult.claims.moderator);
       } else {
         setUser(null);
         setIsModerator(false);

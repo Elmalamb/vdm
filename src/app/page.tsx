@@ -68,11 +68,11 @@ const BlackVoidPage: FC = () => {
   };
 
   if (!isClient) {
-    return <main className="w-screen h-screen bg-black" aria-label="Loading a black void..."></main>;
+    return <div className="flex-1 w-full bg-black" aria-label="Loading a black void..."></div>;
   }
 
   return (
-    <main className="w-screen h-screen bg-background flex items-center justify-center transition-colors duration-500">
+    <div className="flex-1 w-full bg-background flex items-center justify-center transition-colors duration-500">
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -123,7 +123,7 @@ const BlackVoidPage: FC = () => {
           </div>
         </PopoverContent>
       </Popover>
-    </main>
+    </div>
   );
 };
 

@@ -66,13 +66,7 @@ export function Header() {
                 </DialogFooter>
               </TabsContent>
               <TabsContent value="signup">
-                <DialogHeader>
-                  <DialogTitle>Inscription</DialogTitle>
-                  <DialogDescription>
-                    Créez un compte pour commencer.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4 pt-8">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="email-signup" className="text-right">
                       Email

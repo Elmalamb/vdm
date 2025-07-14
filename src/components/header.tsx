@@ -35,6 +35,12 @@ export function Header() {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Authentication</DialogTitle>
+              <DialogDescription>
+                Choose your preferred method to sign in or create an account.
+              </DialogDescription>
+            </DialogHeader>
             <Tabs defaultValue="login">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Connexion</TabsTrigger>

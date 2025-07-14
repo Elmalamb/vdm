@@ -36,9 +36,9 @@ export function Header() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Authentication</DialogTitle>
+              <DialogTitle>Authentification</DialogTitle>
               <DialogDescription>
-                Choose your preferred method to sign in or create an account.
+                Choisissez votre méthode préférée pour vous connecter ou créer un compte.
               </DialogDescription>
             </DialogHeader>
             <Tabs defaultValue="login">

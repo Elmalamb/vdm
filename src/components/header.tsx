@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, Package2, Plus } from 'lucide-react';
+import { LogIn, Package2, Plus, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,8 +20,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/use-auth';
+import { useState } from 'react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -36,6 +38,8 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -57,6 +61,8 @@ export function Header() {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "Connexion réussie." });
+      setIsDialogOpen(false);
+      loginForm.reset();
     } catch (error) {
       console.error("Erreur de connexion:", error);
       toast({ title: "Erreur de connexion", description: "Veuillez vérifier vos identifiants.", variant: "destructive" });
@@ -67,9 +73,21 @@ export function Header() {
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
       toast({ title: "Inscription réussie.", description: "Vous pouvez maintenant vous connecter." });
+      setIsDialogOpen(false);
+      signupForm.reset();
     } catch (error) {
       console.error("Erreur d'inscription:", error);
       toast({ title: "Erreur d'inscription", description: "Cette adresse e-mail est peut-être déjà utilisée.", variant: "destructive" });
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Déconnexion réussie." });
+    } catch (error) {
+      console.error("Erreur de déconnexion:", error);
+      toast({ title: "Erreur de déconnexion", variant: "destructive" });
     }
   };
 
@@ -83,93 +101,103 @@ export function Header() {
         <Button variant="outline" size="icon">
           <Plus className="h-4 w-4" />
         </Button>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon">
-              <LogIn className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="sr-only">Authentification</DialogTitle>
-              <DialogDescription className="sr-only">
-                Choisissez votre méthode préférée pour vous connecter ou créer un compte.
-              </DialogDescription>
-            </DialogHeader>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Connexion</TabsTrigger>
-                <TabsTrigger value="signup">Inscription</TabsTrigger>
-              </TabsList>
-              <TabsContent value="login">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="grid gap-4 py-4 pt-8">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input type="email" placeholder="Email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input type="password" placeholder="Mot de passe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DialogFooter className="justify-center pt-2">
-                      <Button type="submit" className="bg-black text-white hover:bg-black/80">Se connecter</Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </TabsContent>
-              <TabsContent value="signup">
-                <Form {...signupForm}>
-                  <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="grid gap-4 py-4 pt-8">
-                    <FormField
-                      control={signupForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input type="email" placeholder="Email" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={signupForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input type="password" placeholder="Mot de passe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <DialogFooter className="justify-center pt-2">
-                      <Button type="submit" className="bg-black text-white hover:bg-black/80">S'inscrire</Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </Dialog>
+        {!loading && (
+          <>
+            {user ? (
+              <Button variant="outline" size="icon" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <LogIn className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle className="sr-only">Authentification</DialogTitle>
+                    <DialogDescription className="sr-only">
+                      Choisissez votre méthode préférée pour vous connecter ou créer un compte.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Tabs defaultValue="login">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="login">Connexion</TabsTrigger>
+                      <TabsTrigger value="signup">Inscription</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="login">
+                      <Form {...loginForm}>
+                        <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="grid gap-4 py-4 pt-8">
+                          <FormField
+                            control={loginForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="email" placeholder="Email" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={loginForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="password" placeholder="Mot de passe" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <DialogFooter className="justify-center pt-2">
+                            <Button type="submit" className="bg-black text-white hover:bg-black/80">Se connecter</Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </TabsContent>
+                    <TabsContent value="signup">
+                      <Form {...signupForm}>
+                        <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="grid gap-4 py-4 pt-8">
+                          <FormField
+                            control={signupForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="email" placeholder="Email" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={signupForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="password" placeholder="Mot de passe" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <DialogFooter className="justify-center pt-2">
+                            <Button type="submit" className="bg-black text-white hover:bg-black/80">S'inscrire</Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            )}
+          </>
+        )}
       </nav>
     </header>
   );

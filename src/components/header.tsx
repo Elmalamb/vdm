@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -19,11 +18,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
+import { doc, setDoc } from 'firebase/firestore';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -71,7 +71,15 @@ export function Header() {
 
   const onSignupSubmit = async (values: z.infer<typeof signupSchema>) => {
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+      
+      // Create a document for the user in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        email: user.email,
+        role: "membre",
+      });
+
       toast({ title: "Inscription réussie.", description: "Vous pouvez maintenant vous connecter." });
       setIsDialogOpen(false);
       signupForm.reset();

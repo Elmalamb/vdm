@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -22,22 +23,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isModerator, setIsModerator] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        // Get the user's ID token result to check for custom claims
-        const idTokenResult = await user.getIdTokenResult();
-        // Check if the 'moderator' custom claim is true
-        setIsModerator(!!idTokenResult.claims.moderator);
-      } else {
-        setUser(null);
-        setIsModerator(false);
-      }
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    let unsubscribeFirestore: (() => void) | undefined;
+
+    if (user) {
+      const userDocRef = doc(db, "users", user.uid);
+      unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          setIsModerator(userData.role === 'moderateur');
+        } else {
+          setIsModerator(false);
+        }
+      });
+    } else {
+      setIsModerator(false);
+    }
+    
+    return () => {
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+    };
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, isModerator }}>

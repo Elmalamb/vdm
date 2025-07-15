@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
-import { Loader2, PlayCircle, MapPin } from 'lucide-react';
+import { Loader2, PlayCircle, MapPin, Mail } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -66,12 +66,15 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
              <p className="text-lg font-bold text-primary-foreground bg-primary/80 rounded-full px-3 py-1">{ad.price}€</p>
            </div>
            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-             <div>
-               <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
-               <div className="flex items-center gap-1 text-sm text-gray-300">
-                  <MapPin className="w-4 h-4" />
-                  <span>{ad.postalCode}</span>
+            <div className="flex justify-between items-end">
+               <div>
+                 <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
+                 <div className="flex items-center gap-1 text-sm text-gray-300">
+                    <MapPin className="w-4 h-4" />
+                    <span>{ad.postalCode}</span>
+                 </div>
                </div>
+                <Mail className="w-6 h-6 text-white" />
              </div>
            </div>
          </>

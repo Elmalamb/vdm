@@ -65,18 +65,18 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
   if (!userId) return null;
 
   return (
-    <Card>
+    <Card className="flex flex-col h-[584px]">
       <CardHeader>
         <CardTitle>Conversation</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col h-[500px]">
-        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4 flex flex-col">
+      <CardContent className="flex flex-col flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 relative min-h-0">
           {loadingMessages ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <>
+            <div className="flex flex-col space-y-4">
               {messages.map(msg => (
                 <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
                   <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
@@ -85,7 +85,7 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
                 </div>
               ))}
               <div ref={messagesEndRef} />
-            </>
+            </div>
           )}
         </div>
         <form onSubmit={handleSendMessage} className="flex gap-2">

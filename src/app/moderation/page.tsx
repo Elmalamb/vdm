@@ -8,7 +8,7 @@ import { Loader2, Eye } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { collection, onSnapshot, query, type DocumentData } from "firebase/firestore";
+import { collection, getDocs, query, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 const getStatusBadgeVariant = (status: string) => {
@@ -44,18 +44,22 @@ export default function ModerationDashboardPage() {
   }, [user, isModerator, authLoading, router]);
 
   useEffect(() => {
-    const q = query(collection(db, "ads"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    const fetchAds = async () => {
+      setLoading(true);
+      const q = query(collection(db, "ads"));
+      const querySnapshot = await getDocs(q);
       const adsData: DocumentData[] = [];
       querySnapshot.forEach((doc) => {
         adsData.push({ id: doc.id, ...doc.data() });
       });
       setAds(adsData);
       setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
-  }, []);
+    if (isModerator) {
+      fetchAds();
+    }
+  }, [isModerator]);
 
   if (authLoading || loading) {
     return (

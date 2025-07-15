@@ -78,7 +78,7 @@ export default function HomePage() {
                 </div>
               </CardHeader>
               <CardContent className="p-4 flex-grow">
-                <CardTitle className="text-lg font-semibold leading-tight mb-1 truncate">{ad.title}</CardTitle>
+                <CardTitle className="text-sm font-normal text-muted-foreground mb-1 truncate">{ad.title}</CardTitle>
                 <CardDescription>Code Postal: {ad.postalCode}</CardDescription>
               </CardContent>
               <CardFooter className="p-4 pt-0">

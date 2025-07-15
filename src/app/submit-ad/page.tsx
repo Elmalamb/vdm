@@ -18,7 +18,7 @@ import { Film, ImageIcon, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 const MAX_VIDEO_DURATION = 120;
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -90,7 +90,7 @@ export default function SubmitAdPage() {
     }
   };
 
-const onSubmit = async (data: AdFormValues) => {
+  const onSubmit = async (data: AdFormValues) => {
     if (!user) {
         toast({ title: "Erreur", description: "Vous devez être connecté pour soumettre une annonce.", variant: "destructive"});
         return;
@@ -109,22 +109,41 @@ const onSubmit = async (data: AdFormValues) => {
         const videoUploadTask = uploadBytesResumable(videoStorageRef, videoFile);
 
         const totalSize = imageFile.size + videoFile.size;
-        
+        let bytesTransferred = 0;
+
         const tasks = [imageUploadTask, videoUploadTask];
 
-        const updateProgress = () => {
-            const combinedBytesTransferred = tasks.reduce((acc, task) => acc + task.snapshot.bytesTransferred, 0);
-            const progress = (combinedBytesTransferred / totalSize) * 100;
+        const onProgress = (snapshot: { bytesTransferred: number }) => {
+            bytesTransferred += snapshot.bytesTransferred;
+            const progress = (bytesTransferred / totalSize) * 100;
             setUploadProgress(progress);
+        }
+
+        const createUploadPromise = (task: import("@firebase/storage").UploadTask) => {
+            return new Promise<string>((resolve, reject) => {
+                task.on('state_changed', 
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        setUploadProgress(prev => {
+                            const totalProgress = (imageUploadTask.snapshot.bytesTransferred + videoUploadTask.snapshot.bytesTransferred) / totalSize * 100;
+                            return totalProgress;
+                        });
+                    },
+                    (error) => {
+                        reject(error);
+                    },
+                    async () => {
+                        const downloadURL = await getDownloadURL(task.snapshot.ref);
+                        resolve(downloadURL);
+                    }
+                );
+            });
         };
-
-        imageUploadTask.on('state_changed', updateProgress);
-        videoUploadTask.on('state_changed', updateProgress);
         
-        await Promise.all(tasks);
-
-        const imageUrl = await getDownloadURL(imageUploadTask.snapshot.ref);
-        const videoUrl = await getDownloadURL(videoUploadTask.snapshot.ref);
+        const [imageUrl, videoUrl] = await Promise.all([
+            createUploadPromise(imageUploadTask),
+            createUploadPromise(videoUploadTask),
+        ]);
 
         await addDoc(collection(db, "ads"), {
             title: data.title,
@@ -277,3 +296,5 @@ const onSubmit = async (data: AdFormValues) => {
     </div>
   );
 }
+
+    

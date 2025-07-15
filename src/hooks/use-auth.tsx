@@ -58,6 +58,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setIsModerator(false);
         }
         setLoading(false);
+      }, (error) => {
+        console.error("Error fetching user role:", error);
+        setIsModerator(false);
+        setLoading(false);
       });
     } else {
       setIsModerator(false);
@@ -133,6 +137,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else {
             setHasUnreadSupportMessages(false);
         }
+      }, (error) => {
+          console.error("Error in user support chat listener:", error);
+          setHasUnreadSupportMessages(false);
       });
     }
 
@@ -153,18 +160,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         let hasUnread = false;
-        for (const doc of snapshot.docs) {
+        snapshot.forEach((doc) => {
             const data = doc.data();
             if (data.sellerId === user.uid && data.sellerUnread) {
                 hasUnread = true;
-                break;
             }
             if (data.buyerId === user.uid && data.buyerUnread) {
                 hasUnread = true;
-                break;
             }
-        }
+        });
         setHasUnreadMessages(hasUnread);
+    }, (error) => {
+        console.error("Error in conversations listener:", error);
+        setHasUnreadMessages(false);
     });
 
     return () => unsubscribe();

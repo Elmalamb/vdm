@@ -27,7 +27,7 @@ export const sendVisitorMessage = onCall({ cors: true }, async (request) => {
 
     logger.info("Received visitor message:", { visitorEmail, adId });
 
-    if (!visitorEmail || !adId || !message) {
+    if (!visitorEmail || !adId || !message || !sellerEmail) {
         throw new Error("Missing required fields");
     }
 

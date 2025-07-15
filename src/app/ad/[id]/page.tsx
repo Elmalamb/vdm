@@ -131,15 +131,12 @@ const ChatInterface = ({ adId }: { adId: string }) => {
 
 
 export default function AdDetailPage() {
-  const { user, isModerator, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const params = useParams();
   const adId = typeof params.id === 'string' ? params.id : '';
   const adDetails = getAdDetails(adId);
   
-  // Dans un cas réel, nous vérifierions ici si `user.uid === adDetails.sellerId`
-  const isOwner = user?.email?.startsWith('john.doe'); 
-
   useEffect(() => {
     if (!loading && !user) {
        router.push("/");
@@ -152,11 +149,6 @@ export default function AdDetailPage() {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  // Si l'utilisateur n'est ni le propriétaire ni un modérateur, ne rien afficher
-  if (!isOwner && !isModerator) {
-     return null;
   }
   
   return (
@@ -182,7 +174,7 @@ export default function AdDetailPage() {
                 </CardFooter>
               </Card>
 
-              {isOwner && <ChatInterface adId={adId} />}
+              {user && <ChatInterface adId={adId} />}
         </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, PlayCircle, PauseCircle } from 'lucide-react';
+import { Loader2, PlayCircle, PauseCircle, MapPin } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CardDescription } from '@/components/ui/card';
@@ -66,7 +66,10 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
          <div className="flex justify-between items-end">
            <div>
              <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
-             <p className="text-sm text-gray-300">Code Postal: {ad.postalCode}</p>
+             <div className="flex items-center gap-1 text-sm text-gray-300">
+                <MapPin className="w-4 h-4" />
+                <span>{ad.postalCode}</span>
+             </div>
            </div>
            <p className="text-lg font-bold text-white">{ad.price}€</p>
          </div>

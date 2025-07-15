@@ -28,7 +28,7 @@ interface Message {
   timestamp: Timestamp;
 }
 
-const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId: string, onSendMessage: (userId: string, message: string) => Promise<void>, onConversationOpened: (userId: string) => void }) => {
+const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessage: (userId: string, message: string) => Promise<void> }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -38,7 +38,6 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
   useEffect(() => {
     if (!userId) return;
     setLoadingMessages(true);
-    onConversationOpened(userId);
     const q = query(collection(db, `supportChats/${userId}/messages`), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const msgs: Message[] = [];
@@ -49,7 +48,7 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
       setLoadingMessages(false);
     });
     return () => unsubscribe();
-  }, [userId, onConversationOpened]);
+  }, [userId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -166,11 +165,14 @@ export default function MessagingPage() {
   const handleConversationOpened = async (userId: string) => {
     if (!user) return;
     setSelectedUserId(userId);
+    
+    // Marquer la conversation comme lue
     const chatDocRef = doc(db, 'supportChats', userId);
     await updateDoc(chatDocRef, {
       moderatorLastRead: serverTimestamp(),
     }).catch(e => console.error("Could not update moderator last read timestamp", e));
 
+    // Mettre à jour l'état local pour retirer le badge instantanément
     setConversations(prev => prev.map(c => c.userId === userId ? {...c, hasUnread: false} : c));
   };
 
@@ -210,7 +212,7 @@ export default function MessagingPage() {
       </div>
        <div>
         {selectedUserId ? (
-          <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage} onConversationOpened={handleConversationOpened} />
+          <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage} />
         ) : (
           <Card className="flex items-center justify-center h-[584px]">
             <CardContent>

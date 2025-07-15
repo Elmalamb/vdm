@@ -18,7 +18,7 @@ import { Film, ImageIcon, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from "firebase/storage";
 
 const MAX_VIDEO_DURATION = 120;
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -110,29 +110,29 @@ export default function SubmitAdPage() {
 
         const totalSize = imageFile.size + videoFile.size;
         
-        const createUploadPromise = (task: import("@firebase/storage").UploadTask) => {
-            return new Promise<string>((resolve, reject) => {
-                task.on('state_changed', 
-                    (snapshot) => {
-                        const totalBytesTransferred = imageUploadTask.snapshot.bytesTransferred + videoUploadTask.snapshot.bytesTransferred;
-                        const progress = (totalBytesTransferred / totalSize) * 100;
-                        setUploadProgress(progress);
-                    },
-                    (error) => {
-                        console.error("Erreur de téléversement:", error);
-                        reject(error);
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(task.snapshot.ref);
-                        resolve(downloadURL);
-                    }
-                );
-            });
+        const createUploadPromise = (task: UploadTask, otherTask: UploadTask) => {
+          return new Promise<string>((resolve, reject) => {
+            task.on('state_changed', 
+              (snapshot) => {
+                const combinedBytesTransferred = snapshot.bytesTransferred + otherTask.snapshot.bytesTransferred;
+                const progress = (combinedBytesTransferred / totalSize) * 100;
+                setUploadProgress(progress);
+              },
+              (error) => {
+                console.error("Erreur de téléversement:", error);
+                reject(error);
+              },
+              async () => {
+                const downloadURL = await getDownloadURL(task.snapshot.ref);
+                resolve(downloadURL);
+              }
+            );
+          });
         };
         
         const [imageUrl, videoUrl] = await Promise.all([
-            createUploadPromise(imageUploadTask),
-            createUploadPromise(videoUploadTask),
+            createUploadPromise(imageUploadTask, videoUploadTask),
+            createUploadPromise(videoUploadTask, imageUploadTask),
         ]);
 
         await addDoc(collection(db, "ads"), {
@@ -154,11 +154,17 @@ export default function SubmitAdPage() {
         });
         router.push("/");
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erreur détaillée lors de la soumission de l'annonce:", error);
+        let description = "Une erreur inconnue s'est produite. Veuillez réessayer.";
+        if (error.code === 'storage/unauthorized') {
+            description = "Erreur de permissions. Vérifiez les règles de sécurité de Firebase Storage.";
+        } else if (error.code === 'storage/object-not-found') {
+            description = "Le bucket de stockage n'existe pas ou est mal configuré. Veuillez l'activer dans la console Firebase.";
+        }
         toast({
             title: "Erreur de téléversement",
-            description: "Une erreur s'est produite. Vérifiez votre connexion ou la configuration du stockage Firebase.",
+            description: description,
             variant: "destructive",
         });
     } finally {
@@ -167,7 +173,7 @@ export default function SubmitAdPage() {
 };
 
   if (authLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex-1 w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
@@ -272,7 +278,7 @@ export default function SubmitAdPage() {
                  {isSubmitting && (
                     <>
                       <Progress value={uploadProgress} className="absolute inset-0 h-full w-full" />
-                      <span className="absolute text-sm font-medium text-white mix-blend-difference">
+                      <span className="z-10 text-sm font-medium text-white mix-blend-difference">
                          Téléversement... {Math.round(uploadProgress)}%
                       </span>
                     </>

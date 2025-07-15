@@ -14,6 +14,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Loader2, Film, ImageIcon } from "lucide-react";
+import { db, storage } from "@/lib/firebase";
+import { addDoc, collection } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const MAX_VIDEO_DURATION = 120; // 2 minutes in seconds
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -79,17 +82,31 @@ export default function SubmitAdPage() {
   };
 
   const onSubmit = async (data: AdFormValues) => {
+    if (!user) {
+        toast({ title: "Erreur", description: "Vous devez être connecté pour soumettre une annonce.", variant: "destructive"});
+        return;
+    }
     setIsSubmitting(true);
     try {
-      // Pour l'instant, on affiche juste les données.
-      // Prochaines étapes : Uploader les fichiers sur Firebase Storage, puis sauvegarder les données dans Firestore.
-      console.log("Données du formulaire soumises :", {
+      const imageRef = ref(storage, `ads/${user.uid}/${data.image.name}-${Date.now()}`);
+      await uploadBytes(imageRef, data.image);
+      const imageUrl = await getDownloadURL(imageRef);
+
+      const videoRef = ref(storage, `ads/${user.uid}/${data.video.name}-${Date.now()}`);
+      await uploadBytes(videoRef, data.video);
+      const videoUrl = await getDownloadURL(videoRef);
+
+      await addDoc(collection(db, "ads"), {
         title: data.title,
         price: data.price,
         postalCode: data.postalCode,
-        imageName: data.image.name,
-        videoName: data.video.name,
-        userId: user?.uid,
+        imageUrl,
+        videoUrl,
+        userId: user.uid,
+        userEmail: user.email,
+        status: 'pending', // 'pending', 'approved', 'rejected'
+        createdAt: new Date(),
+        views: 0
       });
 
       toast({

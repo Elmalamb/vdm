@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -39,7 +40,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator } = useAuth();
+  const { user, loading, isModerator, hasUnreadMessages } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -117,6 +118,8 @@ export function Header() {
     }
   };
 
+  const supportLink = isModerator ? "/moderation/messaging" : "/support";
+
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-background border-b">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
@@ -135,13 +138,17 @@ export function Header() {
                     </Link>
                   </Button>
                 )}
-                 {!isModerator && (
-                  <Button asChild variant="outline" size="icon">
-                    <Link href="/support">
-                      <MessageSquare className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                )}
+                <Button asChild variant="outline" size="icon" className="relative">
+                  <Link href={supportLink}>
+                    <MessageSquare className="h-4 w-4" />
+                     {hasUnreadMessages && (
+                      <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                      </span>
+                    )}
+                  </Link>
+                </Button>
                 <Button variant="outline" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>

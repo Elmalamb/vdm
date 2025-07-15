@@ -4,12 +4,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isModerator: boolean;
+  hasUnreadMessages: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModerator, setIsModerator] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
@@ -29,6 +31,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(firebaseUser);
       } else {
         setUser(null);
+        setIsModerator(false);
+        setHasUnreadMessages(false);
       }
       setLoading(false);
     });
@@ -40,17 +44,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     let unsubscribeFirestore: (() => void) | undefined;
 
     if (user) {
+      setLoading(true);
       const userDocRef = doc(db, "users", user.uid);
       unsubscribeFirestore = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           const userData = doc.data();
-          setIsModerator(userData.role === 'moderateur');
+          const moderatorStatus = userData.role === 'moderateur';
+          setIsModerator(moderatorStatus);
         } else {
           setIsModerator(false);
         }
+        setLoading(false);
       });
     } else {
       setIsModerator(false);
+      setLoading(false);
     }
     
     return () => {
@@ -60,8 +68,81 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) {
+      setHasUnreadMessages(false);
+      return;
+    }
+
+    let unsubscribe: (() => void) | undefined;
+
+    if (isModerator) {
+      // Logic for moderators
+      const supportChatsRef = collection(db, 'supportChats');
+      unsubscribe = onSnapshot(supportChatsRef, async (snapshot) => {
+        let hasUnread = false;
+        for (const chatDoc of snapshot.docs) {
+          const chatData = chatDoc.data();
+          const moderatorLastRead = chatData.moderatorLastRead?.toMillis() || 0;
+          
+          const messagesRef = collection(db, `supportChats/${chatDoc.id}/messages`);
+          const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
+          const messagesSnapshot = await getDocs(q);
+
+          if (!messagesSnapshot.empty) {
+            const lastMessage = messagesSnapshot.docs[0].data();
+            if (lastMessage.senderId !== user.uid) {
+              const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
+              if (lastMessageTimestamp > moderatorLastRead) {
+                hasUnread = true;
+                break; 
+              }
+            }
+          }
+        }
+        setHasUnreadMessages(hasUnread);
+      });
+
+    } else {
+       // Logic for regular users
+      const chatDocRef = doc(db, 'supportChats', user.uid);
+      unsubscribe = onSnapshot(chatDocRef, async (chatDoc) => {
+        if (!chatDoc.exists()) {
+          setHasUnreadMessages(false);
+          return;
+        }
+        
+        const chatData = chatDoc.data();
+        const userLastRead = chatData.userLastRead?.toMillis() || 0;
+        
+        const messagesRef = collection(db, `supportChats/${user.uid}/messages`);
+        const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
+        const messagesSnapshot = await getDocs(q);
+
+        if (!messagesSnapshot.empty) {
+          const lastMessage = messagesSnapshot.docs[0].data();
+           if (lastMessage.senderId !== user.uid) {
+               const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
+               setHasUnreadMessages(lastMessageTimestamp > userLastRead);
+           } else {
+               setHasUnreadMessages(false);
+           }
+        } else {
+            setHasUnreadMessages(false);
+        }
+      });
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [user, isModerator]);
+
+
   return (
-    <AuthContext.Provider value={{ user, loading, isModerator }}>
+    <AuthContext.Provider value={{ user, loading, isModerator, hasUnreadMessages }}>
       {children}
     </AuthContext.Provider>
   );

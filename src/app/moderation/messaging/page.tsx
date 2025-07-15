@@ -17,7 +17,6 @@ import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type
 interface Conversation {
   userId: string;
   userEmail: string;
-  lastMessage?: string;
   hasUnread?: boolean;
 }
 
@@ -130,9 +129,11 @@ export default function MessagingPage() {
         let hasUnread = false;
         if (!messagesSnapshot.empty) {
             const lastMessage = messagesSnapshot.docs[0].data();
-            const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
-            if (lastMessageTimestamp > moderatorLastRead && lastMessage.senderId !== user.uid) {
-                hasUnread = true;
+            if (lastMessage.senderId !== user.uid) {
+                const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
+                if (lastMessageTimestamp > moderatorLastRead) {
+                    hasUnread = true;
+                }
             }
         }
   
@@ -166,13 +167,11 @@ export default function MessagingPage() {
     if (!user) return;
     setSelectedUserId(userId);
     
-    // Marquer la conversation comme lue
     const chatDocRef = doc(db, 'supportChats', userId);
     await updateDoc(chatDocRef, {
       moderatorLastRead: serverTimestamp(),
     }).catch(e => console.error("Could not update moderator last read timestamp", e));
 
-    // Mettre à jour l'état local pour retirer le badge instantanément
     setConversations(prev => prev.map(c => c.userId === userId ? {...c, hasUnread: false} : c));
   };
 

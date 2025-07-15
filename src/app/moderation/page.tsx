@@ -4,8 +4,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Loader2, ShieldAlert } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,71 +50,52 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export default function ModerationPage() {
+export default function ModerationDashboardPage() {
   const { user, isModerator, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !isModerator) {
-      router.push("/");
-    }
+    // La redirection est gérée par le layout
   }, [user, isModerator, loading, router]);
 
   if (loading) {
     return (
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex h-full w-full items-center justify-center py-10">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
-
-  if (!isModerator) {
-    return null; // ou un message d'accès non autorisé
-  }
-
+  
   return (
-    <div className="container mx-auto py-8">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <ShieldAlert className="h-6 w-6" />
-            <CardTitle>Tableau de Modération</CardTitle>
-          </div>
-          <CardDescription>Gérez les annonces soumises par les utilisateurs.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Titre de l'annonce</TableHead>
-                <TableHead>Utilisateur</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ads.map((ad) => (
-                <TableRow key={ad.id}>
-                  <TableCell className="font-medium">{ad.title}</TableCell>
-                  <TableCell>{ad.user}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(ad.status)}>
-                      {ad.status === 'pending' && 'En attente'}
-                      {ad.status === 'approved' && 'Approuvée'}
-                      {ad.status === 'rejected' && 'Rejetée'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                     <Button asChild variant="outline" size="sm">
-                       <Link href={`/ad/${ad.id}`}>Voir</Link>
-                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Titre de l'annonce</TableHead>
+            <TableHead>Utilisateur</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {ads.map((ad) => (
+            <TableRow key={ad.id}>
+              <TableCell className="font-medium">{ad.title}</TableCell>
+              <TableCell>{ad.user}</TableCell>
+              <TableCell>
+                <Badge variant={getStatusBadgeVariant(ad.status)}>
+                  {ad.status === 'pending' && 'En attente'}
+                  {ad.status === 'approved' && 'Approuvée'}
+                  {ad.status === 'rejected' && 'Rejetée'}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/ad/${ad.id}`}>Voir</Link>
+                  </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
   );
 }

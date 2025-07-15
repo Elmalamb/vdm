@@ -6,6 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
+import { Loader2, Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { db, serverTimestamp } from '@/lib/firebase';
+import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp } from 'firebase/firestore';
 
 // Données statiques pour les conversations.
 // Idéalement, elles proviendraient de Firestore, en listant les documents de la collection 'chats'.
@@ -26,39 +33,131 @@ const conversations = [
   },
 ];
 
-export default function MessagingPage() {
+interface Message {
+  id: string;
+  text: string;
+  senderId: string;
+  timestamp: Timestamp;
+}
+
+const ChatInterface = ({ adId, onSendMessage }: { adId: string, onSendMessage: (adId: string, message: string) => Promise<void> }) => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!adId) return;
+    const q = query(collection(db, `chats/${adId}/messages`), orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const msgs: Message[] = [];
+      querySnapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() } as Message);
+      });
+      setMessages(msgs);
+    });
+    return () => unsubscribe();
+  }, [adId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === '' || !user || !adId) return;
+    await onSendMessage(adId, newMessage);
+    setNewMessage('');
+  };
+  
+  if (!adId) return null;
+
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Annonce</TableHead>
-            <TableHead>Vendeur</TableHead>
-            <TableHead>Dernier Message</TableHead>
-            <TableHead className="text-center">Notifications</TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {conversations.map((conv) => (
-            <TableRow key={conv.adId}>
-              <TableCell className="font-medium">{conv.adTitle}</TableCell>
-              <TableCell>{conv.sellerEmail}</TableCell>
-              <TableCell className="text-muted-foreground truncate max-w-xs">{conv.lastMessage}</TableCell>
-              <TableCell className="text-center">
-                {conv.unreadCount > 0 && (
-                  <Badge variant="destructive">{conv.unreadCount}</Badge>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/ad/${conv.adId}`}>Ouvrir le chat</Link>
-                </Button>
-              </TableCell>
-            </TableRow>
+    <Card>
+      <CardHeader>
+        <CardTitle>Conversation</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col h-[500px]">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4">
+          {messages.map(msg => (
+            <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
+              <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                <p className="text-sm">{msg.text}</p>
+              </div>
+            </div>
           ))}
-        </TableBody>
-      </Table>
+          <div ref={messagesEndRef} />
+        </div>
+        <form onSubmit={handleSendMessage} className="flex gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Écrire un message..."
+          />
+          <Button type="submit" size="icon">
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+
+export default function MessagingPage() {
+  const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const handleSendMessage = async (adId: string, message: string) => {
+    if (!user) return;
+    await addDoc(collection(db, `chats/${adId}/messages`), {
+      text: message,
+      senderId: user.uid,
+      timestamp: serverTimestamp(),
+    });
+  };
+
+  return (
+     <div className="grid md:grid-cols-2 gap-8">
+      <div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Annonce</TableHead>
+              <TableHead>Vendeur</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {conversations.map((conv) => (
+              <TableRow 
+                key={conv.adId} 
+                onClick={() => setSelectedAdId(conv.adId)}
+                className="cursor-pointer"
+              >
+                <TableCell className="font-medium">{conv.adTitle}</TableCell>
+                <TableCell>{conv.sellerEmail}</TableCell>
+                <TableCell className="text-right">
+                  {conv.unreadCount > 0 && (
+                    <Badge variant="destructive">{conv.unreadCount}</Badge>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+       <div>
+        {selectedAdId ? (
+          <ChatInterface adId={selectedAdId} onSendMessage={handleSendMessage}/>
+        ) : (
+          <Card className="flex items-center justify-center h-[500px]">
+            <CardContent>
+              <p className="text-muted-foreground">Sélectionnez une conversation pour voir les messages.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

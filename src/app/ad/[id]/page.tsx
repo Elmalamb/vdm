@@ -24,6 +24,30 @@ const getAdDetails = (adId: string) => {
       videoUrl: "https://placehold.co/600x400.png", // Remplacer par une vraie URL de vidéo si disponible
       sellerId: "SELLER_ID_123", // L'UID du vendeur
     },
+    "AD002": {
+      title: "Appareil photo reflex",
+      price: 450,
+      postalCode: "69002",
+      imageUrl: "https://placehold.co/600x400.png",
+      videoUrl: "https://placehold.co/600x400.png",
+      sellerId: "SELLER_ID_456",
+    },
+     "AD003": {
+      title: "Table basse en chêne",
+      price: 120,
+      postalCode: "33000",
+      imageUrl: "https://placehold.co/600x400.png",
+      videoUrl: "https://placehold.co/600x400.png",
+      sellerId: "SELLER_ID_789",
+    },
+     "AD004": {
+      title: "Collection de timbres rares",
+      price: 800,
+      postalCode: "75001",
+      imageUrl: "https://placehold.co/600x400.png",
+      videoUrl: "https://placehold.co/600x400.png",
+      sellerId: "SELLER_ID_101",
+    },
   };
   return ads[adId];
 };
@@ -36,7 +60,7 @@ interface Message {
   timestamp: Timestamp;
 }
 
-const ChatInterface = ({ adId }: { adId: string }) => {
+const ChatInterface = ({ adId, onSendMessage }: { adId: string, onSendMessage: (adId: string, message: string) => Promise<void> }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -62,11 +86,7 @@ const ChatInterface = ({ adId }: { adId: string }) => {
     e.preventDefault();
     if (newMessage.trim() === '' || !user) return;
 
-    await addDoc(collection(db, `chats/${adId}/messages`), {
-      text: newMessage,
-      senderId: user.uid,
-      timestamp: serverTimestamp(),
-    });
+    await onSendMessage(adId, newMessage);
     setNewMessage('');
   };
 
@@ -126,6 +146,15 @@ export default function AdDetailPage() {
   if (!isModerator && !isOwner) {
     return null;
   }
+  
+  const handleSendMessage = async (adId: string, message: string) => {
+    if (!user) return;
+    await addDoc(collection(db, `chats/${adId}/messages`), {
+      text: message,
+      senderId: user.uid,
+      timestamp: serverTimestamp(),
+    });
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -157,9 +186,13 @@ export default function AdDetailPage() {
             </CardContent>
           </Card>
         </div>
-        <div>
-          <ChatInterface adId={adId} />
-        </div>
+         {isOwner ? (
+          <div>
+            <ChatInterface adId={adId} onSendMessage={handleSendMessage} />
+          </div>
+        ) : (
+          <div/>
+        )}
       </div>
     </div>
   );

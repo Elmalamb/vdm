@@ -71,7 +71,7 @@ export default function AdDetailPage() {
         <Card className="overflow-hidden">
           {adDetails.videoUrl ? (
             <div className="relative">
-              <AspectRatio ratio={16 / 9}>
+              <AspectRatio ratio={1 / 1}>
                 <video
                   src={adDetails.videoUrl}
                   controls

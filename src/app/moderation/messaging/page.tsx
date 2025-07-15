@@ -32,10 +32,12 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!userId) return;
+    setLoadingMessages(true);
     onConversationOpened(userId);
     const q = query(collection(db, `supportChats/${userId}/messages`), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -44,6 +46,7 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
         msgs.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(msgs);
+      setLoadingMessages(false);
     });
     return () => unsubscribe();
   }, [userId, onConversationOpened]);
@@ -67,23 +70,32 @@ const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId
         <CardTitle>Conversation</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col h-[500px]">
-        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4">
-          {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
-              <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
-                <p className="text-sm">{msg.text}</p>
-              </div>
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4 flex flex-col">
+          {loadingMessages ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin" />
             </div>
-          ))}
-          <div ref={messagesEndRef} />
+          ) : (
+            <>
+              {messages.map(msg => (
+                <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                    <p className="text-sm">{msg.text}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </>
+          )}
         </div>
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Écrire un message..."
+            disabled={loadingMessages}
           />
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={loadingMessages}>
             <Send className="h-4 w-4" />
           </Button>
         </form>

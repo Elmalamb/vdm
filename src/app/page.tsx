@@ -251,7 +251,6 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Dernières annonces</h1>
       {ads.length === 0 ? (
         <p>Aucune annonce à afficher pour le moment.</p>
       ) : (

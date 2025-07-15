@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Film, ImageIcon } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
@@ -199,7 +200,7 @@ export default function SubmitAdPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input placeholder="Titre de l'annonce" {...field} />
+                      <Textarea placeholder="Titre de l'annonce" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

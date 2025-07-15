@@ -102,34 +102,24 @@ export default function SubmitAdPage() {
         const imageFile = data.image;
         const videoFile = data.video;
 
-        const imageStorageRef = ref(storage, `ads/${user.uid}/${imageFile.name}-${Date.now()}`);
-        const videoStorageRef = ref(storage, `ads/${user.uid}/${videoFile.name}-${Date.now()}`);
+        const imageStorageRef = ref(storage, `ads_images/${user.uid}/${imageFile.name}-${Date.now()}`);
+        const videoStorageRef = ref(storage, `ads_videos/${user.uid}/${videoFile.name}-${Date.now()}`);
 
         const imageUploadTask = uploadBytesResumable(imageStorageRef, imageFile);
         const videoUploadTask = uploadBytesResumable(videoStorageRef, videoFile);
 
         const totalSize = imageFile.size + videoFile.size;
-        let bytesTransferred = 0;
-
-        const tasks = [imageUploadTask, videoUploadTask];
-
-        const onProgress = (snapshot: { bytesTransferred: number }) => {
-            bytesTransferred += snapshot.bytesTransferred;
-            const progress = (bytesTransferred / totalSize) * 100;
-            setUploadProgress(progress);
-        }
-
+        
         const createUploadPromise = (task: import("@firebase/storage").UploadTask) => {
             return new Promise<string>((resolve, reject) => {
                 task.on('state_changed', 
                     (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        setUploadProgress(prev => {
-                            const totalProgress = (imageUploadTask.snapshot.bytesTransferred + videoUploadTask.snapshot.bytesTransferred) / totalSize * 100;
-                            return totalProgress;
-                        });
+                        const totalBytesTransferred = imageUploadTask.snapshot.bytesTransferred + videoUploadTask.snapshot.bytesTransferred;
+                        const progress = (totalBytesTransferred / totalSize) * 100;
+                        setUploadProgress(progress);
                     },
                     (error) => {
+                        console.error("Erreur de téléversement:", error);
                         reject(error);
                     },
                     async () => {
@@ -165,10 +155,10 @@ export default function SubmitAdPage() {
         router.push("/");
 
     } catch (error) {
-        console.error("Erreur lors de la soumission de l'annonce:", error);
+        console.error("Erreur détaillée lors de la soumission de l'annonce:", error);
         toast({
             title: "Erreur de téléversement",
-            description: "Une erreur s'est produite. Vérifiez votre connexion ou la configuration du stockage.",
+            description: "Une erreur s'est produite. Vérifiez votre connexion ou la configuration du stockage Firebase.",
             variant: "destructive",
         });
     } finally {
@@ -176,7 +166,7 @@ export default function SubmitAdPage() {
     }
 };
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
@@ -296,5 +286,3 @@ export default function SubmitAdPage() {
     </div>
   );
 }
-
-    

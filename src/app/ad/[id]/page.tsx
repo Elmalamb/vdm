@@ -5,11 +5,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { doc, getDoc, DocumentData, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { AspectRatio } from '@radix-ui/react-aspect-ratio';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 export default function AdDetailPage() {
   const { user, isModerator, loading: authLoading } = useAuth();
@@ -77,6 +77,7 @@ export default function AdDetailPage() {
                    src={adDetails.videoUrl}
                    controls
                    className="w-full h-full object-cover bg-black"
+                   poster={adDetails.imageUrl}
                  >
                    Votre navigateur ne supporte pas la balise vidéo.
                  </video>

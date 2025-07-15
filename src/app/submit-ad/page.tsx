@@ -14,10 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Film, ImageIcon } from "lucide-react";
+import { Film, ImageIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from "firebase/storage";
 
 const MAX_VIDEO_DURATION = 120; // 2 minutes in seconds
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -26,8 +27,8 @@ const adSchema = z.object({
   title: z.string().min(5, { message: "Le titre doit contenir au moins 5 caractères." }),
   price: z.coerce.number().positive({ message: "Le prix doit être un nombre positif." }),
   postalCode: z.string().regex(/^\d{5}$/, { message: "Le code postal doit contenir 5 chiffres." }),
-  image: z.instanceof(File).refine(file => file.size < MAX_FILE_SIZE, `La taille de l'image ne doit pas dépasser 100 Mo.`).refine(file => file.type.startsWith("image/"), "Le fichier doit être une image."),
-  video: z.instanceof(File).refine(file => file.size < MAX_FILE_SIZE, `La taille de la vidéo ne doit pas dépasser 100 Mo.`).refine(file => file.type.startsWith("video/"), "Le fichier doit être une vidéo."),
+  image: z.instanceof(File).refine(file => file.size < MAX_FILE_SIZE, `L'image ne doit pas dépasser 100Mo.`).refine(file => file.type.startsWith("image/"), "Le fichier doit être une image."),
+  video: z.instanceof(File).refine(file => file.size < MAX_FILE_SIZE, `La vidéo ne doit pas dépasser 100Mo.`).refine(file => file.type.startsWith("video/"), "Le fichier doit être une vidéo."),
 });
 
 type AdFormValues = z.infer<typeof adSchema>;
@@ -37,6 +38,7 @@ export default function SubmitAdPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -82,53 +84,107 @@ export default function SubmitAdPage() {
     }
   };
 
-  const onSubmit = async (data: AdFormValues) => {
+  const uploadFile = (file: File, path: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const storageRef = ref(storage, path);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // We don't update progress here to avoid complexity of combined progress.
+                // It's handled in the onSubmit function.
+            },
+            (error) => {
+                reject(error);
+            },
+            async () => {
+                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve(downloadURL);
+            }
+        );
+    });
+};
+
+const onSubmit = async (data: AdFormValues) => {
     if (!user) {
         toast({ title: "Erreur", description: "Vous devez être connecté pour soumettre une annonce.", variant: "destructive"});
         return;
     }
     setIsSubmitting(true);
+    setUploadProgress(0);
+
     try {
-      const imageRef = ref(storage, `ads/${user.uid}/${data.image.name}-${Date.now()}`);
-      await uploadBytes(imageRef, data.image);
-      const imageUrl = await getDownloadURL(imageRef);
+        const imageFile = data.image;
+        const videoFile = data.video;
 
-      const videoRef = ref(storage, `ads/${user.uid}/${data.video.name}-${Date.now()}`);
-      await uploadBytes(videoRef, data.video);
-      const videoUrl = await getDownloadURL(videoRef);
+        const imageRef = ref(storage, `ads/${user.uid}/${imageFile.name}-${Date.now()}`);
+        const videoRef = ref(storage, `ads/${user.uid}/${videoFile.name}-${Date.now()}`);
 
-      await addDoc(collection(db, "ads"), {
-        title: data.title,
-        price: data.price,
-        postalCode: data.postalCode,
-        imageUrl,
-        videoUrl,
-        userId: user.uid,
-        userEmail: user.email,
-        status: 'pending', // 'pending', 'approved', 'rejected'
-        createdAt: new Date(),
-        views: 0
-      });
+        const imageUploadTask = uploadBytesResumable(imageRef, imageFile);
+        const videoUploadTask = uploadBytesResumable(videoRef, videoFile);
 
-      toast({
-        title: "Annonce Soumise !",
-        description: "Votre annonce a été soumise avec succès pour examen.",
-      });
-      router.push("/");
+        const tasks: UploadTask[] = [imageUploadTask, videoUploadTask];
+        const totalBytes = imageFile.size + videoFile.size;
+        let totalBytesTransferred = 0;
+
+        tasks.forEach(task => {
+            task.on('state_changed', (snapshot) => {
+                // This handler will be called multiple times for each task.
+                // To calculate combined progress, we would need to track bytes transferred for each task.
+                // Let's use a simpler approach for now by listening to both and updating a shared variable.
+            });
+        });
+
+        const combinedListener = () => {
+             const imageBytes = imageUploadTask.snapshot.bytesTransferred;
+             const videoBytes = videoUploadTask.snapshot.bytesTransferred;
+             totalBytesTransferred = imageBytes + videoBytes;
+             const progress = (totalBytesTransferred / totalBytes) * 100;
+             setUploadProgress(progress);
+        };
+        
+        imageUploadTask.on('state_changed', combinedListener);
+        videoUploadTask.on('state_changed', combinedListener);
+
+
+        await Promise.all(tasks.map(t => t.then()));
+
+        const imageUrl = await getDownloadURL(imageUploadTask.snapshot.ref);
+        const videoUrl = await getDownloadURL(videoUploadTask.snapshot.ref);
+
+        await addDoc(collection(db, "ads"), {
+            title: data.title,
+            price: data.price,
+            postalCode: data.postalCode,
+            imageUrl,
+            videoUrl,
+            userId: user.uid,
+            userEmail: user.email,
+            status: 'pending',
+            createdAt: new Date(),
+            views: 0
+        });
+
+        toast({
+            title: "Annonce Soumise !",
+            description: "Votre annonce a été soumise avec succès pour examen.",
+        });
+        router.push("/");
+
     } catch (error) {
-      console.error("Erreur lors de la soumission de l'annonce:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors de la soumission de votre annonce.",
-        variant: "destructive",
-      });
+        console.error("Erreur lors de la soumission de l'annonce:", error);
+        toast({
+            title: "Erreur",
+            description: "Une erreur s'est produite lors de la soumission de votre annonce.",
+            variant: "destructive",
+        });
     } finally {
-      setIsSubmitting(false);
+        setIsSubmitting(false);
     }
-  };
+};
 
   if (authLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex justify-center items-center h-full"><Progress value={33} className="w-1/2" /></div>;
   }
 
   if (!user) {
@@ -234,9 +290,16 @@ export default function SubmitAdPage() {
                 />
               </div>
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Soumettre l'annonce
+              <Button type="submit" disabled={isSubmitting} className="w-full relative">
+                 {isSubmitting && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <Progress value={uploadProgress} className="h-full w-full" />
+                        <span className="absolute text-sm font-medium text-white mix-blend-difference">
+                           Téléversement... {Math.round(uploadProgress)}%
+                        </span>
+                    </div>
+                )}
+                <span className={isSubmitting ? 'opacity-0' : 'opacity-100'}>Soumettre l'annonce</span>
               </Button>
             </form>
           </Form>
@@ -245,3 +308,5 @@ export default function SubmitAdPage() {
     </div>
   );
 }
+
+    

@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Film, ImageIcon } from "lucide-react";
+import { Film, ImageIcon, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
@@ -84,27 +84,6 @@ export default function SubmitAdPage() {
     }
   };
 
-  const uploadFile = (file: File, path: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const storageRef = ref(storage, path);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                // We don't update progress here to avoid complexity of combined progress.
-                // It's handled in the onSubmit function.
-            },
-            (error) => {
-                reject(error);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(downloadURL);
-            }
-        );
-    });
-};
-
 const onSubmit = async (data: AdFormValues) => {
     if (!user) {
         toast({ title: "Erreur", description: "Vous devez être connecté pour soumettre une annonce.", variant: "destructive"});
@@ -117,37 +96,26 @@ const onSubmit = async (data: AdFormValues) => {
         const imageFile = data.image;
         const videoFile = data.video;
 
-        const imageRef = ref(storage, `ads/${user.uid}/${imageFile.name}-${Date.now()}`);
-        const videoRef = ref(storage, `ads/${user.uid}/${videoFile.name}-${Date.now()}`);
+        const imageStorageRef = ref(storage, `ads/${user.uid}/${imageFile.name}-${Date.now()}`);
+        const videoStorageRef = ref(storage, `ads/${user.uid}/${videoFile.name}-${Date.now()}`);
 
-        const imageUploadTask = uploadBytesResumable(imageRef, imageFile);
-        const videoUploadTask = uploadBytesResumable(videoRef, videoFile);
+        const imageUploadTask = uploadBytesResumable(imageStorageRef, imageFile);
+        const videoUploadTask = uploadBytesResumable(videoStorageRef, videoFile);
 
-        const tasks: UploadTask[] = [imageUploadTask, videoUploadTask];
-        const totalBytes = imageFile.size + videoFile.size;
-        let totalBytesTransferred = 0;
-
-        tasks.forEach(task => {
-            task.on('state_changed', (snapshot) => {
-                // This handler will be called multiple times for each task.
-                // To calculate combined progress, we would need to track bytes transferred for each task.
-                // Let's use a simpler approach for now by listening to both and updating a shared variable.
-            });
-        });
-
-        const combinedListener = () => {
-             const imageBytes = imageUploadTask.snapshot.bytesTransferred;
-             const videoBytes = videoUploadTask.snapshot.bytesTransferred;
-             totalBytesTransferred = imageBytes + videoBytes;
-             const progress = (totalBytesTransferred / totalBytes) * 100;
-             setUploadProgress(progress);
-        };
+        const totalSize = imageFile.size + videoFile.size;
         
-        imageUploadTask.on('state_changed', combinedListener);
-        videoUploadTask.on('state_changed', combinedListener);
+        const tasks = [imageUploadTask, videoUploadTask];
 
+        const updateProgress = () => {
+            const combinedBytesTransferred = tasks.reduce((acc, task) => acc + task.snapshot.bytesTransferred, 0);
+            const progress = (combinedBytesTransferred / totalSize) * 100;
+            setUploadProgress(progress);
+        };
 
-        await Promise.all(tasks.map(t => t.then()));
+        imageUploadTask.on('state_changed', updateProgress);
+        videoUploadTask.on('state_changed', updateProgress);
+        
+        await Promise.all(tasks);
 
         const imageUrl = await getDownloadURL(imageUploadTask.snapshot.ref);
         const videoUrl = await getDownloadURL(videoUploadTask.snapshot.ref);
@@ -184,7 +152,7 @@ const onSubmit = async (data: AdFormValues) => {
 };
 
   if (authLoading) {
-    return <div className="flex justify-center items-center h-full"><Progress value={33} className="w-1/2" /></div>;
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   if (!user) {
@@ -292,12 +260,12 @@ const onSubmit = async (data: AdFormValues) => {
 
               <Button type="submit" disabled={isSubmitting} className="w-full relative">
                  {isSubmitting && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Progress value={uploadProgress} className="h-full w-full" />
-                        <span className="absolute text-sm font-medium text-white mix-blend-difference">
-                           Téléversement... {Math.round(uploadProgress)}%
-                        </span>
-                    </div>
+                    <>
+                      <Progress value={uploadProgress} className="absolute inset-0 h-full w-full" />
+                      <span className="absolute text-sm font-medium text-white mix-blend-difference">
+                         Téléversement... {Math.round(uploadProgress)}%
+                      </span>
+                    </>
                 )}
                 <span className={isSubmitting ? 'opacity-0' : 'opacity-100'}>Soumettre l'annonce</span>
               </Button>
@@ -308,5 +276,3 @@ const onSubmit = async (data: AdFormValues) => {
     </div>
   );
 }
-
-    

@@ -63,7 +63,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
        {!isPlaying && (
          <>
            <div className="absolute top-0 right-0 p-4">
-             <p className="text-lg font-bold text-primary-foreground bg-primary/80 rounded-full px-3 py-1">{ad.price}€</p>
+             <p className="text-lg font-bold text-primary-foreground bg-primary rounded-full px-3 py-1">{ad.price}€</p>
            </div>
            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
              <div>

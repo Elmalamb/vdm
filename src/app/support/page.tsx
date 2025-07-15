@@ -24,6 +24,7 @@ export default function SupportPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -43,16 +44,18 @@ export default function SupportPage() {
         msgs.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(msgs);
-      
-      // Marquer les messages comme lus par l'utilisateur
-      if (user) {
-        const chatDocRef = doc(db, 'supportChats', user.uid);
-        setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
-      }
     });
 
     return () => unsubscribe();
   }, [user]);
+  
+  useEffect(() => {
+      if (user && messages.length > 0) {
+        const chatDocRef = doc(db, 'supportChats', user.uid);
+        setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
+      }
+  }, [user, messages]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -60,21 +63,18 @@ export default function SupportPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !user) return;
+    if (newMessage.trim() === '' || !user || isSending) return;
 
+    setIsSending(true);
     const chatDocRef = doc(db, 'supportChats', user.uid);
-    const messagesCollectionRef = collection(db, `supportChats/${user.uid}/messages`);
     
     try {
-      // 1. Crée ou met à jour le document de chat avec les informations utilisateur et la date de lecture.
-      // L'option { merge: true } est cruciale ici.
       await setDoc(chatDocRef, { 
         userEmail: user.email,
         userLastRead: serverTimestamp(),
       }, { merge: true });
-
-      // 2. Ajoute le nouveau message.
-      await addDoc(messagesCollectionRef, {
+      
+      await addDoc(collection(db, `supportChats/${user.uid}/messages`), {
         text: newMessage,
         senderId: user.uid,
         timestamp: serverTimestamp(),
@@ -83,6 +83,8 @@ export default function SupportPage() {
       setNewMessage('');
     } catch(error) {
         console.error("Erreur détaillée lors de l'envoi du message:", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -117,9 +119,10 @@ export default function SupportPage() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Écrire un message..."
+              disabled={isSending}
             />
-            <Button type="submit" size="icon">
-              <Send className="h-4 w-4" />
+            <Button type="submit" size="icon" disabled={isSending}>
+              {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </form>
         </CardContent>

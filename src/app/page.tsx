@@ -12,7 +12,7 @@ import { collection, onSnapshot, query, where, type DocumentData } from 'firebas
 import { db } from '@/lib/firebase';
 
 export default function HomePage() {
-  const { isModerator, loading: authLoading } = useAuth();
+  const { user, isModerator, loading: authLoading } = useAuth();
   const router = useRouter();
   const [ads, setAds] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +24,9 @@ export default function HomePage() {
   }, [isModerator, authLoading, router]);
 
   useEffect(() => {
+    // Ne pas récupérer les annonces si l'utilisateur est un modérateur (car il sera redirigé)
+    if (isModerator) return;
+
     setLoading(true);
     const q = query(collection(db, "ads"), where("status", "==", "approved"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -33,17 +36,26 @@ export default function HomePage() {
       });
       setAds(adsData);
       setLoading(false);
+    }, (error) => {
+      console.error("Erreur Firestore:", error);
+      setLoading(false);
     });
+    
     return () => unsubscribe();
-  }, []);
+  }, [isModerator]);
   
-  if (authLoading || isModerator || loading) {
+  // Affiche le loader pendant le chargement de l'authentification ou des données,
+  // ou si l'utilisateur est un modérateur en attente de redirection.
+  if (authLoading || loading || (!loading && isModerator)) {
     return (
       <div className="flex-1 w-full flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
+
+  // Ne rien afficher pour un modérateur (pour éviter un flash de contenu avant redirection)
+  if(isModerator) return null;
 
   return (
     <div className="container mx-auto py-8">

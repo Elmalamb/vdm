@@ -16,28 +16,24 @@ const ads = [
     id: "AD001",
     title: "Vélo de course vintage",
     user: "john.doe@example.com",
-    submissionDate: "2024-07-28",
     status: "pending",
   },
   {
     id: "AD002",
     title: "Appareil photo reflex",
     user: "jane.smith@example.com",
-    submissionDate: "2024-07-27",
     status: "approved",
   },
   {
     id: "AD003",
     title: "Table basse en chêne",
     user: "sam.wilson@example.com",
-    submissionDate: "2024-07-26",
     status: "rejected",
   },
   {
     id: "AD004",
     title: "Collection de timbres rares",
     user: "lisa.ray@example.com",
-    submissionDate: "2024-07-25",
     status: "pending",
   },
 ];
@@ -93,7 +89,6 @@ export default function ModerationPage() {
               <TableRow>
                 <TableHead>Titre de l'annonce</TableHead>
                 <TableHead>Utilisateur</TableHead>
-                <TableHead>Date de soumission</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -103,7 +98,6 @@ export default function ModerationPage() {
                 <TableRow key={ad.id}>
                   <TableCell className="font-medium">{ad.title}</TableCell>
                   <TableCell>{ad.user}</TableCell>
-                  <TableCell>{ad.submissionDate}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(ad.status)}>
                       {ad.status === 'pending' && 'En attente'}

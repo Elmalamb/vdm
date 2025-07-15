@@ -163,7 +163,11 @@ export default function MessagingPage() {
   };
 
   if(loading){
-    return <Loader2 className="h-8 w-8 animate-spin" />
+     return (
+      <div className="flex h-[584px] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
@@ -196,7 +200,7 @@ export default function MessagingPage() {
         {selectedUserId ? (
           <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage} onConversationOpened={handleConversationOpened} />
         ) : (
-          <Card className="flex items-center justify-center h-[500px]">
+          <Card className="flex items-center justify-center h-[584px]">
             <CardContent>
               <p className="text-muted-foreground">Sélectionnez une conversation pour voir les messages.</p>
             </CardContent>

@@ -7,13 +7,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { Loader2, PlayCircle, MapPin, Mail, Send } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
-import { db, functions } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { httpsCallable } from 'firebase/functions';
+import { forwardVisitorMessage } from '@/ai/flows/visitor-message-flow';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -98,16 +98,14 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
         return;
       }
       try {
-        const sendVisitorMessage = httpsCallable(functions, 'sendVisitorMessage');
-        await sendVisitorMessage({ 
+        await forwardVisitorMessage({
           visitorEmail: visitorEmail,
-          adId: ad.id,
+          visitorMessage: message,
           adTitle: ad.title,
           sellerEmail: ad.userEmail,
-          message: message,
         });
 
-        toast({ title: "Message transmis !", description: "Votre message a été transmis au support qui contactera le vendeur." });
+        toast({ title: "Message transmis !", description: "Votre message a été transmis au vendeur." });
         setMessage('');
         setVisitorEmail('');
         setIsDialogOpen(false);
@@ -170,7 +168,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <DialogHeader>
                       <DialogTitle>Contacter le vendeur</DialogTitle>
                       <DialogDescription>
-                        {user ? `Envoyer un message à propos de l'annonce "${ad.title}".` : "Votre message sera transmis au vendeur par notre équipe."}
+                        {user ? `Envoyer un message à propos de l'annonce "${ad.title}".` : "Votre message sera transmis directement au vendeur."}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">

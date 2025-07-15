@@ -4,12 +4,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, PlayCircle, PauseCircle, MapPin } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Loader2, PlayCircle, MapPin } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { CardDescription } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -63,8 +61,11 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
        </div>
 
        {!isPlaying && (
-         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-           <div className="flex justify-between items-end">
+         <>
+           <div className="absolute top-0 left-0 p-4">
+             <p className="text-lg font-bold text-white bg-black/50 rounded-md px-2 py-1">{ad.price}€</p>
+           </div>
+           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
              <div>
                <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
                <div className="flex items-center gap-1 text-sm text-gray-300">
@@ -72,9 +73,8 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                   <span>{ad.postalCode}</span>
                </div>
              </div>
-             <p className="text-lg font-bold text-white">{ad.price}€</p>
            </div>
-         </div>
+         </>
        )}
      </Card>
   );

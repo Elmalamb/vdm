@@ -62,18 +62,20 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
           {!isPlaying && <PlayCircle className="w-16 h-16 text-white" />}
        </div>
 
-       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-         <div className="flex justify-between items-end">
-           <div>
-             <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
-             <div className="flex items-center gap-1 text-sm text-gray-300">
-                <MapPin className="w-4 h-4" />
-                <span>{ad.postalCode}</span>
+       {!isPlaying && (
+         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+           <div className="flex justify-between items-end">
+             <div>
+               <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
+               <div className="flex items-center gap-1 text-sm text-gray-300">
+                  <MapPin className="w-4 h-4" />
+                  <span>{ad.postalCode}</span>
+               </div>
              </div>
+             <p className="text-lg font-bold text-white">{ad.price}€</p>
            </div>
-           <p className="text-lg font-bold text-white">{ad.price}€</p>
          </div>
-       </div>
+       )}
      </Card>
   );
 };

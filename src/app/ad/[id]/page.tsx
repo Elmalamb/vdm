@@ -68,10 +68,10 @@ export default function AdDetailPage() {
   return (
     <div className="container mx-auto py-8 flex justify-center">
       <div className="w-full max-w-4xl">
-        <Card className="overflow-hidden">
+        <Card>
           {adDetails.videoUrl ? (
             <div className="relative">
-              <AspectRatio ratio={1 / 1}>
+              <AspectRatio ratio={1 / 1} className="overflow-hidden rounded-lg">
                 <video
                   src={adDetails.videoUrl}
                   controls

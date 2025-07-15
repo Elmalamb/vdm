@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, useParams } from 'next/navigation';
 import { Loader2, Send } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
@@ -21,7 +21,7 @@ const getAdDetails = (adId: string) => {
       price: 350,
       postalCode: "75010",
       imageUrl: "https://placehold.co/600x400.png",
-      videoUrl: "https://placehold.co/600x400.png", // Remplacer par une vraie URL de vidéo si disponible
+      dataAiHint: "vintage bicycle",
       sellerId: "SELLER_ID_123", // L'UID du vendeur
     },
     "AD002": {
@@ -29,7 +29,7 @@ const getAdDetails = (adId: string) => {
       price: 450,
       postalCode: "69002",
       imageUrl: "https://placehold.co/600x400.png",
-      videoUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "reflex camera",
       sellerId: "SELLER_ID_456",
     },
      "AD003": {
@@ -37,7 +37,7 @@ const getAdDetails = (adId: string) => {
       price: 120,
       postalCode: "33000",
       imageUrl: "https://placehold.co/600x400.png",
-      videoUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "oak coffee table",
       sellerId: "SELLER_ID_789",
     },
      "AD004": {
@@ -45,7 +45,7 @@ const getAdDetails = (adId: string) => {
       price: 800,
       postalCode: "75001",
       imageUrl: "https://placehold.co/600x400.png",
-      videoUrl: "https://placehold.co/600x400.png",
+      dataAiHint: "stamp collection",
       sellerId: "SELLER_ID_101",
     },
   };
@@ -59,63 +59,6 @@ interface Message {
   senderId: string;
   timestamp: Timestamp;
 }
-
-const ChatInterface = ({ adId, onSendMessage }: { adId: string, onSendMessage: (adId: string, message: string) => Promise<void> }) => {
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const q = query(collection(db, `chats/${adId}/messages`), orderBy('timestamp', 'asc'));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const msgs: Message[] = [];
-      querySnapshot.forEach((doc) => {
-        msgs.push({ id: doc.id, ...doc.data() } as Message);
-      });
-      setMessages(msgs);
-    });
-    return () => unsubscribe();
-  }, [adId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newMessage.trim() === '' || !user) return;
-
-    await onSendMessage(adId, newMessage);
-    setNewMessage('');
-  };
-
-  return (
-    <div className="flex flex-col h-[500px]">
-      <CardTitle className="mb-4">Messagerie</CardTitle>
-      <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4">
-        {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
-            <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
-              <p className="text-sm">{msg.text}</p>
-            </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
-      <form onSubmit={handleSendMessage} className="flex gap-2">
-        <Input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Écrire un message..."
-        />
-        <Button type="submit" size="icon">
-          <Send className="h-4 w-4" />
-        </Button>
-      </form>
-    </div>
-  );
-};
 
 
 export default function AdDetailPage() {
@@ -147,51 +90,29 @@ export default function AdDetailPage() {
     return null;
   }
   
-  const handleSendMessage = async (adId: string, message: string) => {
-    if (!user) return;
-    await addDoc(collection(db, `chats/${adId}/messages`), {
-      text: message,
-      senderId: user.uid,
-      timestamp: serverTimestamp(),
-    });
-  };
-
   return (
-    <div className="container mx-auto py-8">
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>{adDetails.title}</CardTitle>
-              <CardDescription>
-                Prix: {adDetails.price}€ - Code Postal: {adDetails.postalCode}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-               <div className="grid md:grid-cols-2 gap-6">
-                 <div>
-                  <h3 className="font-semibold mb-2">Image de présentation (Thumbnail)</h3>
-                  <div className="aspect-square bg-muted rounded-md overflow-hidden relative">
-                    <Image src={adDetails.imageUrl} alt={adDetails.title} layout="fill" objectFit="cover" data-ai-hint="vintage bicycle" />
+    <div className="container mx-auto py-8 flex justify-center">
+        <div className="w-full max-w-sm">
+             <Card className="overflow-hidden bg-black text-white">
+                <CardHeader className="p-0">
+                  <div className="aspect-w-3 aspect-h-2 relative">
+                    <Image 
+                      src={adDetails.imageUrl} 
+                      alt={adDetails.title} 
+                      layout="fill" 
+                      objectFit="cover" 
+                      data-ai-hint={adDetails.dataAiHint}
+                    />
                   </div>
-                </div>
-                 <div>
-                  <h3 className="font-semibold mb-2">Vidéo</h3>
-                   <div className="aspect-square bg-muted rounded-md overflow-hidden relative">
-                    {/* Pour la vidéo, un composant vidéo serait plus approprié */}
-                    <Image src={adDetails.videoUrl} alt="Vidéo de l'annonce" layout="fill" objectFit="cover" data-ai-hint="bicycle video" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <h2 className="text-xl font-semibold leading-tight mb-1 truncate">{adDetails.title}</h2>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <p className="text-xl font-bold">{adDetails.price}€</p>
+                </CardFooter>
+              </Card>
         </div>
-         {isOwner ? (
-          <div className="md:col-span-3">
-            <ChatInterface adId={adId} onSendMessage={handleSendMessage} />
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

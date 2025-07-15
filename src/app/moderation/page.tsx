@@ -70,8 +70,8 @@ export default function ModerationDashboardPage() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Titre de l'annonce</TableHead>
             <TableHead>Utilisateur</TableHead>
+            <TableHead>Titre de l'annonce</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -79,8 +79,8 @@ export default function ModerationDashboardPage() {
         <TableBody>
           {ads.map((ad) => (
             <TableRow key={ad.id}>
-              <TableCell className="font-medium">{ad.title}</TableCell>
               <TableCell>{ad.user}</TableCell>
+              <TableCell className="font-medium">{ad.title}</TableCell>
               <TableCell>
                 <Badge variant={getStatusBadgeVariant(ad.status)}>
                   {ad.status === 'pending' && 'En attente'}

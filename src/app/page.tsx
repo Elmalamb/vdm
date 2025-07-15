@@ -24,9 +24,6 @@ export default function HomePage() {
   }, [isModerator, authLoading, router]);
 
   useEffect(() => {
-    // Ne pas récupérer les annonces si l'utilisateur est un modérateur (car il sera redirigé)
-    if (isModerator) return;
-
     setLoading(true);
     const q = query(collection(db, "ads"), where("status", "==", "approved"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -42,11 +39,9 @@ export default function HomePage() {
     });
     
     return () => unsubscribe();
-  }, [isModerator]);
+  }, []);
   
-  // Affiche le loader pendant le chargement de l'authentification ou des données,
-  // ou si l'utilisateur est un modérateur en attente de redirection.
-  if (authLoading || loading || (!loading && isModerator)) {
+  if (authLoading || loading) {
     return (
       <div className="flex-1 w-full flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -54,7 +49,6 @@ export default function HomePage() {
     );
   }
 
-  // Ne rien afficher pour un modérateur (pour éviter un flash de contenu avant redirection)
   if(isModerator) return null;
 
   return (
@@ -75,7 +69,7 @@ export default function HomePage() {
                         alt={ad.title}
                         layout="fill"
                         objectFit="cover"
-                        data-ai-hint={ad.dataAiHint || 'product image'}
+                        data-ai-hint={ad.dataAiHint || 'image produit'}
                         className="transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>

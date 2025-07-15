@@ -5,8 +5,8 @@ import { Header } from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'Black Void',
-  description: 'A pure black screen for ultimate focus and tranquility.',
+  title: 'Le Vide Noir',
+  description: 'Un espace épuré pour vos annonces.',
 };
 
 export default function RootLayout({

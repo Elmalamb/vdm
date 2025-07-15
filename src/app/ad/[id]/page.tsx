@@ -33,7 +33,6 @@ export default function AdDetailPage() {
         if (adSnap.exists()) {
           setAdDetails(adSnap.data());
         } else {
-          // Gérer le cas où l'annonce n'existe pas
           setAdDetails(null);
         }
         setLoading(false);
@@ -61,7 +60,7 @@ export default function AdDetailPage() {
                 alt={adDetails.title}
                 layout="fill"
                 objectFit="cover"
-                data-ai-hint={adDetails.dataAiHint || 'product image'}
+                data-ai-hint={adDetails.dataAiHint || 'image produit'}
               />
             </div>
           </CardHeader>

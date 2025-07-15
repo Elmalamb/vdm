@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type Timestamp, doc, setDoc } from 'firebase/firestore';
 
 interface Message {
   id: string;
@@ -50,12 +50,11 @@ export default function SupportPage() {
   }, [user]);
   
   useEffect(() => {
-      if (user && messages.length > 0) {
-        const chatDocRef = doc(db, 'supportChats', user.uid);
-        setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
-      }
+    if (user && messages.length > 0) {
+      const chatDocRef = doc(db, 'supportChats', user.uid);
+      setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
+    }
   }, [user, messages]);
-
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

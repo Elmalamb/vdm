@@ -25,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -124,7 +123,7 @@ export function Header() {
     <header className="px-4 lg:px-6 h-14 flex items-center bg-background border-b">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
         <Package2 className="h-6 w-6" />
-        <span className="font-bold">Black Void</span>
+        <span className="font-bold">Le Vide Noir</span>
       </Link>
       <nav className="ml-auto flex gap-4 sm:gap-6">
         {!loading && (

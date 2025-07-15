@@ -20,8 +20,8 @@ import { db, storage } from "@/lib/firebase";
 import { addDoc, collection } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, type UploadTask } from "firebase/storage";
 
-const MAX_VIDEO_DURATION = 120; // 2 minutes in seconds
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_VIDEO_DURATION = 120;
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 const adSchema = z.object({
   title: z.string().min(5, { message: "Le titre doit contenir au moins 5 caractères." }),
@@ -89,29 +89,6 @@ export default function SubmitAdPage() {
       videoElement.src = URL.createObjectURL(file);
     }
   };
-
-  const uploadFile = (file: File, path: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, path);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // This listener is intentionally left for potential individual progress tracking
-        },
-        (error) => {
-          console.error("Upload error:", error);
-          reject(error);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          resolve(downloadURL);
-        }
-      );
-    });
-  };
-
 
 const onSubmit = async (data: AdFormValues) => {
     if (!user) {
@@ -203,7 +180,7 @@ const onSubmit = async (data: AdFormValues) => {
                       <FormControl>
                         <div className="w-full aspect-square bg-muted rounded-md flex items-center justify-center overflow-hidden">
                           {imagePreview ? (
-                            <img src={imagePreview} alt="Aperçu" className="w-full h-full object-cover" />
+                            <img src={imagePreview} alt="Aperçu de l'image" className="w-full h-full object-cover" />
                           ) : (
                              <div className="text-muted-foreground flex flex-col items-center">
                                <ImageIcon className="h-16 w-16" />

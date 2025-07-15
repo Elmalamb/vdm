@@ -65,6 +65,7 @@ export default function HomePage() {
                     <video
                       src={ad.videoUrl}
                       controls
+                      playsInline
                       className="w-full h-full object-cover"
                       poster={ad.imageUrl}
                     >

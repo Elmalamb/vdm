@@ -8,77 +8,11 @@ import { Card } from '@/components/ui/card';
 import { Loader2, PlayCircle, MapPin, Mail } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { forwardVisitorMessage } from '@/ai/flows/visitor-message-flow';
-
-
-const contactSchema = z.object({
-  visitorEmail: z.string().email({ message: "Veuillez saisir une adresse e-mail valide." }),
-  message: z.string().min(10, { message: "Votre message doit contenir au moins 10 caractères." }),
-});
-
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
-
-  const form = useForm<z.infer<typeof contactSchema>>({
-    resolver: zodResolver(contactSchema),
-    defaultValues: {
-      visitorEmail: "",
-      message: "",
-    },
-  });
-
-  const { isSubmitting } = form.formState;
-
-  const handleSendMessage = async (values: z.infer<typeof contactSchema>) => {
-    try {
-      const result = await forwardVisitorMessage({
-        visitorEmail: values.visitorEmail,
-        visitorMessage: values.message,
-        adTitle: ad.title,
-        sellerEmail: ad.userEmail,
-      });
-
-      if (result.success) {
-        toast({
-          title: "Message envoyé !",
-          description: "Votre message a été transmis au vendeur.",
-        });
-        setIsDialogOpen(false);
-        form.reset();
-      } else {
-        throw new Error("L'envoi a échoué");
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer le message. Veuillez réessayer.",
-        variant: "destructive",
-      });
-    }
-  };
-
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -141,60 +75,14 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-white/20 hover:text-white"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Mail className="w-6 h-6" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle>Contacter le vendeur</DialogTitle>
-                      <DialogDescription>
-                        Envoyez un message au vendeur pour l'annonce "{ad.title}". Votre email ne sera pas partagé, il recevra votre message et pourra vous répondre.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSendMessage)} className="grid gap-4 py-4">
-                        <FormField
-                          control={form.control}
-                          name="visitorEmail"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="email" placeholder="Votre email pour la réponse" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={form.control}
-                          name="message"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Textarea placeholder="Votre message..." {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <DialogFooter>
-                          <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Envoyer
-                          </Button>
-                        </DialogFooter>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                <a
+                  href={`mailto:${ad.userEmail}?subject=Réponse à votre annonce: ${encodeURIComponent(ad.title)}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20"
+                  aria-label="Contacter le vendeur"
+                >
+                  <Mail className="w-6 h-6" />
+                </a>
              </div>
            </div>
          </>

@@ -7,12 +7,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { Loader2, PlayCircle, MapPin, Mail, Send } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, functions } from '@/lib/firebase';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { httpsCallable } from 'firebase/functions';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -97,29 +98,13 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
         return;
       }
       try {
-        // We use a support chat as an intermediary for non-logged-in users.
-        // We can create a unique ID for this visitor based on their email for grouping messages.
-        const supportChatId = `visitor_${visitorEmail.replace(/[^a-zA-Z0-9]/g, '_')}_ad_${ad.id}`;
-        const supportChatRef = doc(db, 'supportChats', supportChatId);
-
-        const initialMessage = `
-          Nouveau message d'un visiteur pour l'annonce : "${ad.title}" (ID: ${ad.id})
-          Vendeur: ${ad.userEmail}
-          Email du visiteur: ${visitorEmail}
-          
-          Message:
-          ${message}
-        `;
-
-        await setDoc(supportChatRef, {
-            userEmail: `Visiteur: ${visitorEmail}`,
-            createdAt: serverTimestamp(),
-        }, { merge: true });
-
-        await addDoc(collection(supportChatRef, 'messages'), {
-            text: initialMessage,
-            senderId: 'visitor',
-            timestamp: serverTimestamp(),
+        const sendVisitorMessage = httpsCallable(functions, 'sendVisitorMessage');
+        await sendVisitorMessage({ 
+          visitorEmail: visitorEmail,
+          adId: ad.id,
+          adTitle: ad.title,
+          sellerEmail: ad.userEmail,
+          message: message,
         });
 
         toast({ title: "Message transmis !", description: "Votre message a été transmis au support qui contactera le vendeur." });
@@ -128,7 +113,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
         setIsDialogOpen(false);
       } catch (error) {
         console.error("Erreur lors de la transmission du message:", error);
-        toast({ title: "Erreur", description: "Une erreur est survenue lors de la transmission.", variant: "destructive" });
+        toast({ title: "Erreur", description: "Une erreur est survenue lors de la transmission. Réessayez plus tard.", variant: "destructive" });
       }
     }
     setIsSending(false);

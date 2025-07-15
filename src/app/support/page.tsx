@@ -74,13 +74,13 @@ export default function SupportPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 flex justify-center">
-      <Card className="w-full max-w-2xl">
+    <div className="container mx-auto py-8 flex flex-col items-center justify-center flex-1">
+      <Card className="w-full max-w-2xl flex flex-col h-full">
         <CardHeader>
           <CardTitle>Contacter le support</CardTitle>
           <CardDescription>Envoyez un message à notre équipe de modération.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col h-[600px]">
+        <CardContent className="flex flex-col flex-1 h-full overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>

@@ -1,142 +1,110 @@
 
 "use client";
 
-import { useState, useEffect, useRef, type FC } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Settings, Maximize, Minimize, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
-const BlackVoidPage: FC = () => {
-  const { isModerator } = useAuth();
+// Données statiques pour les annonces. Idéalement, elles proviendraient de Firestore.
+const ads = [
+  {
+    id: "AD001",
+    title: "Vélo de course vintage",
+    price: 350,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "vintage bicycle",
+  },
+  {
+    id: "AD002",
+    title: "Appareil photo reflex",
+    price: 450,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "reflex camera",
+  },
+   {
+    id: "AD003",
+    title: "Table basse en chêne",
+    price: 120,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "oak coffee table",
+  },
+   {
+    id: "AD004",
+    title: "Collection de timbres rares",
+    price: 800,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "stamp collection",
+  },
+  {
+    id: "AD005",
+    title: "Guitare électrique",
+    price: 550,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "electric guitar",
+  },
+  {
+    id: "AD006",
+    title: "Fauteuil design scandinave",
+    price: 280,
+    imageUrl: "https://placehold.co/600x400.png",
+    dataAiHint: "scandinavian armchair",
+  },
+];
+
+
+export default function HomePage() {
+  const { isModerator, loading } = useAuth();
   const router = useRouter();
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [isWakeLockActive, setIsWakeLockActive] = useState<boolean>(false);
-  const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
-  const [isClient, setIsClient] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isModerator) {
+    if (!loading && isModerator) {
       router.push('/moderation');
     }
-  }, [isModerator, router]);
-
-  useEffect(() => {
-    setIsClient(true);
-    setIsFullscreen(!!document.fullscreenElement);
-  }, []);
-
-  const handleFullscreenToggle = async () => {
-    if (!document.fullscreenElement) {
-      try {
-        await document.documentElement.requestFullscreen();
-      } catch (error) {
-        console.error("Fullscreen request failed:", error);
-      }
-    } else {
-      if (document.exitFullscreen) {
-        try {
-          await document.exitFullscreen();
-        } catch (error) {
-          console.error("Exiting fullscreen failed:", error);
-        }
-      }
-    }
-  };
+  }, [isModerator, loading, router]);
   
-  useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  const handleWakeLockToggle = async (checked: boolean) => {
-    if (checked) {
-      if ('wakeLock' in navigator) {
-        try {
-          wakeLockSentinel.current = await navigator.wakeLock.request('screen');
-          setIsWakeLockActive(true);
-          wakeLockSentinel.current.addEventListener('release', () => {
-            setIsWakeLockActive(false);
-            wakeLockSentinel.current = null;
-          });
-        } catch (err) {
-          console.error(`Wake Lock request failed: ${(err as Error).message}`);
-          setIsWakeLockActive(false);
-        }
-      } else {
-        console.warn('Screen Wake Lock API not supported.');
-      }
-    } else {
-      if (wakeLockSentinel.current) {
-        await wakeLockSentinel.current.release();
-      }
-    }
-  };
-
-  if (!isClient || isModerator) {
-    // Render a blank screen while redirecting or for non-client renders
-    return <div className="flex-1 w-full bg-background" aria-label="Loading..."></div>;
+  if (loading || isModerator) {
+    return (
+      <div className="flex-1 w-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="flex-1 w-full bg-background flex items-center justify-center transition-colors duration-500 p-4">
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground/50 hover:text-foreground hover:bg-white/10 rounded-full transition-all duration-300 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0 data-[state=open]:bg-white/10 data-[state=open]:text-foreground"
-            aria-label="Open settings"
-          >
-            <Settings className="h-6 w-6 animate-spin-slow" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80" align="center">
-          <div className="grid gap-4">
-            <div className="space-y-1.5">
-              <h4 className="font-semibold leading-none">Black Void</h4>
-              <p className="text-sm text-muted-foreground">
-                Settings for your personal void.
-              </p>
-            </div>
-            <Separator />
-            <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="fullscreen-btn" className="flex items-center gap-3 font-normal cursor-pointer">
-                  {isFullscreen ? (
-                    <Minimize className="h-4 w-4 text-muted-foreground" />
-                  ) : (
-                    <Maximize className="h-4 w-4 text-muted-foreground" />
-                  )}
-                  <span>Fullscreen</span>
-                </Label>
-                <Button id="fullscreen-btn" variant="outline" size="sm" onClick={handleFullscreenToggle}>
-                  {isFullscreen ? 'Exit' : 'Enter'}
-                </Button>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="keep-screen-on" className="flex items-center gap-3 font-normal cursor-pointer">
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                  <span>Keep Screen On</span>
-                </Label>
-                <Switch
-                  id="keep-screen-on"
-                  checked={isWakeLockActive}
-                  onCheckedChange={handleWakeLockToggle}
-                  aria-label="Toggle keep screen on"
-                />
-              </div>
-            </div>
-          </div>
-        </PopoverContent>
-      </Popover>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Dernières annonces</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {ads.map((ad) => (
+          <Link key={ad.id} href={`/ad/${ad.id}`} legacyBehavior>
+            <a className="group">
+              <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <CardHeader className="p-0">
+                  <div className="aspect-square relative">
+                    <Image 
+                      src={ad.imageUrl} 
+                      alt={ad.title} 
+                      layout="fill" 
+                      objectFit="cover" 
+                      data-ai-hint={ad.dataAiHint}
+                      className="transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <CardTitle className="text-lg font-semibold leading-tight mb-1 truncate">{ad.title}</CardTitle>
+                </CardContent>
+                <CardFooter className="p-4 pt-0">
+                  <p className="text-lg font-bold text-primary">{ad.price}€</p>
+                </CardFooter>
+              </Card>
+            </a>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 };
-
-export default BlackVoidPage;

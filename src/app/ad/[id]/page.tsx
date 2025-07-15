@@ -60,6 +60,75 @@ interface Message {
   timestamp: Timestamp;
 }
 
+const ChatInterface = ({ adId }: { adId: string }) => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!adId) return;
+    const q = query(collection(db, `chats/${adId}/messages`), orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const msgs: Message[] = [];
+      querySnapshot.forEach((doc) => {
+        msgs.push({ id: doc.id, ...doc.data() } as Message);
+      });
+      setMessages(msgs);
+    });
+    return () => unsubscribe();
+  }, [adId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === '' || !user || !adId) return;
+    
+    await addDoc(collection(db, `chats/${adId}/messages`), {
+        text: newMessage,
+        senderId: user.uid,
+        timestamp: serverTimestamp(),
+    });
+
+    setNewMessage('');
+  };
+  
+  if (!adId) return null;
+
+  return (
+    <Card className="mt-8">
+      <CardHeader>
+        <CardTitle>Conversation avec un modérateur</CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col h-[500px]">
+        <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 space-y-4">
+          {messages.map(msg => (
+            <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
+              <div className={`rounded-lg px-4 py-2 max-w-xs lg:max-w-md ${msg.senderId === user?.uid ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                <p className="text-sm">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+        <form onSubmit={handleSendMessage} className="flex gap-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Écrire un message..."
+          />
+          <Button type="submit" size="icon">
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
 
 export default function AdDetailPage() {
   const { user, isModerator, loading } = useAuth();
@@ -72,11 +141,10 @@ export default function AdDetailPage() {
   const isOwner = user?.email?.startsWith('john.doe'); 
 
   useEffect(() => {
-    if (!loading && !isModerator && !isOwner) {
-      router.push("/");
+    if (!loading && !user) {
+       router.push("/");
     }
-  }, [user, isModerator, isOwner, loading, router]);
-
+  }, [user, loading, router]);
 
   if (loading || !adDetails) {
     return (
@@ -86,8 +154,9 @@ export default function AdDetailPage() {
     );
   }
 
-  if (!isModerator && !isOwner) {
-    return null;
+  // Si l'utilisateur n'est ni le propriétaire ni un modérateur, ne rien afficher
+  if (!isOwner && !isModerator) {
+     return null;
   }
   
   return (
@@ -112,6 +181,8 @@ export default function AdDetailPage() {
                   <p className="text-xl font-bold">{adDetails.price}€</p>
                 </CardFooter>
               </Card>
+
+              {isOwner && <ChatInterface adId={adId} />}
         </div>
     </div>
   );

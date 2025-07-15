@@ -158,8 +158,8 @@ export default function AdDetailPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="grid md:grid-cols-2 gap-8">
-        <div>
+      <div className="grid md:grid-cols-3 gap-8">
+        <div className="md:col-span-3">
           <Card>
             <CardHeader>
               <CardTitle>{adDetails.title}</CardTitle>
@@ -168,9 +168,9 @@ export default function AdDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Image de présentation</h3>
+               <div className="grid md:grid-cols-2 gap-6">
+                 <div>
+                  <h3 className="font-semibold mb-2">Image de présentation (Thumbnail)</h3>
                   <div className="aspect-square bg-muted rounded-md overflow-hidden relative">
                     <Image src={adDetails.imageUrl} alt={adDetails.title} layout="fill" objectFit="cover" data-ai-hint="vintage bicycle" />
                   </div>
@@ -187,12 +187,10 @@ export default function AdDetailPage() {
           </Card>
         </div>
          {isOwner ? (
-          <div>
+          <div className="md:col-span-3">
             <ChatInterface adId={adId} onSendMessage={handleSendMessage} />
           </div>
-        ) : (
-          <div/>
-        )}
+        ) : null}
       </div>
     </div>
   );

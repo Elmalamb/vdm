@@ -12,12 +12,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [visitorEmail, setVisitorEmail] = useState('');
   const [isSending, setIsSending] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,51 +46,92 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   }
 
   const handleSendMessage = async () => {
-    if (!user) {
-      toast({ title: "Connexion requise", description: "Vous devez être connecté pour envoyer un message.", variant: "destructive" });
-      return;
-    }
-    if(user.uid === ad.userId) {
-      toast({ title: "Action impossible", description: "Vous ne pouvez pas vous envoyer de message.", variant: "destructive" });
-      return;
-    }
     if (message.trim() === '') return;
-
+    
     setIsSending(true);
-    try {
-      const conversationId = `${ad.id}_${user.uid}`;
-      const conversationRef = doc(db, 'conversations', conversationId);
-      
-      await setDoc(conversationRef, {
-        adId: ad.id,
-        adTitle: ad.title,
-        sellerId: ad.userId,
-        sellerEmail: ad.userEmail,
-        buyerId: user.uid,
-        buyerEmail: user.email,
-        participants: [ad.userId, user.uid],
-        lastMessage: message,
-        lastMessageTimestamp: serverTimestamp(),
-        sellerUnread: true,
-        buyerUnread: false,
-      }, { merge: true });
 
-      await addDoc(collection(conversationRef, 'messages'), {
-        text: message,
-        senderId: user.uid,
-        timestamp: serverTimestamp(),
-      });
-      
-      toast({ title: "Message envoyé !", description: "Votre message a été envoyé au vendeur." });
-      setMessage('');
-      setIsDialogOpen(false);
-      router.push('/my-messages');
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
-      toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
-    } finally {
-      setIsSending(false);
+    if (user) {
+      // Logged-in user logic
+      if(user.uid === ad.userId) {
+        toast({ title: "Action impossible", description: "Vous ne pouvez pas vous envoyer de message.", variant: "destructive" });
+        setIsSending(false);
+        return;
+      }
+      try {
+        const conversationId = `${ad.id}_${user.uid}`;
+        const conversationRef = doc(db, 'conversations', conversationId);
+        
+        await setDoc(conversationRef, {
+          adId: ad.id,
+          adTitle: ad.title,
+          sellerId: ad.userId,
+          sellerEmail: ad.userEmail,
+          buyerId: user.uid,
+          buyerEmail: user.email,
+          participants: [ad.userId, user.uid],
+          lastMessage: message,
+          lastMessageTimestamp: serverTimestamp(),
+          sellerUnread: true,
+          buyerUnread: false,
+        }, { merge: true });
+
+        await addDoc(collection(conversationRef, 'messages'), {
+          text: message,
+          senderId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+        
+        toast({ title: "Message envoyé !", description: "Votre message a été envoyé au vendeur." });
+        setMessage('');
+        setIsDialogOpen(false);
+        router.push('/my-messages');
+      } catch (error) {
+        console.error("Erreur lors de l'envoi du message:", error);
+        toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
+      }
+    } else {
+      // Visitor logic
+       if (visitorEmail.trim() === '') {
+        toast({ title: "Email requis", description: "Veuillez entrer votre adresse e-mail.", variant: "destructive" });
+        setIsSending(false);
+        return;
+      }
+      try {
+        // We use a support chat as an intermediary for non-logged-in users.
+        // We can create a unique ID for this visitor based on their email for grouping messages.
+        const supportChatId = `visitor_${visitorEmail.replace(/[^a-zA-Z0-9]/g, '_')}_ad_${ad.id}`;
+        const supportChatRef = doc(db, 'supportChats', supportChatId);
+
+        const initialMessage = `
+          Nouveau message d'un visiteur pour l'annonce : "${ad.title}" (ID: ${ad.id})
+          Vendeur: ${ad.userEmail}
+          Email du visiteur: ${visitorEmail}
+          
+          Message:
+          ${message}
+        `;
+
+        await setDoc(supportChatRef, {
+            userEmail: `Visiteur: ${visitorEmail}`,
+            createdAt: serverTimestamp(),
+        }, { merge: true });
+
+        await addDoc(collection(supportChatRef, 'messages'), {
+            text: initialMessage,
+            senderId: 'visitor',
+            timestamp: serverTimestamp(),
+        });
+
+        toast({ title: "Message transmis !", description: "Votre message a été transmis au support qui contactera le vendeur." });
+        setMessage('');
+        setVisitorEmail('');
+        setIsDialogOpen(false);
+      } catch (error) {
+        console.error("Erreur lors de la transmission du message:", error);
+        toast({ title: "Erreur", description: "Une erreur est survenue lors de la transmission.", variant: "destructive" });
+      }
     }
+    setIsSending(false);
   };
 
   return (
@@ -134,19 +177,26 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <button onClick={(e) => { e.stopPropagation(); if(!user) { toast({ title: "Connexion requise", description: "Vous devez être connecté pour contacter le vendeur."}); return; } setIsDialogOpen(true); }} className="p-2 -m-2">
+                    <button onClick={(e) => { e.stopPropagation(); setIsDialogOpen(true); }} className="p-2 -m-2">
                        <Mail className="w-6 h-6 text-white" />
                     </button>
                   </DialogTrigger>
-                  {user && (
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                       <DialogTitle>Contacter le vendeur</DialogTitle>
                       <DialogDescription>
-                        Envoyer un message à propos de l'annonce "{ad.title}".
+                        {user ? `Envoyer un message à propos de l'annonce "${ad.title}".` : "Votre message sera transmis au vendeur par notre équipe."}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
+                      {!user && (
+                         <Input 
+                            placeholder="Votre adresse e-mail"
+                            type="email"
+                            value={visitorEmail}
+                            onChange={(e) => setVisitorEmail(e.target.value)}
+                         />
+                      )}
                       <Textarea 
                         placeholder="Votre message ici..."
                         value={message}
@@ -164,7 +214,6 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                       </Button>
                     </DialogFooter>
                   </DialogContent>
-                  )}
                 </Dialog>
              </div>
            </div>

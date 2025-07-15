@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, getDocs, where } from 'firebase/firestore';
 
 interface Conversation {
   userId: string;

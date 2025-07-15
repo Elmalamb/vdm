@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, Package2, Plus, LogOut, MessageSquare } from 'lucide-react';
+import { LogIn, Package2, Plus, LogOut, MessageSquare, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator, hasUnreadMessages } = useAuth();
+  const { user, loading, isModerator, hasUnreadMessages, hasUnreadSupportMessages } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -131,16 +131,29 @@ export function Header() {
             {user ? (
               <>
                 {!isModerator && (
-                  <Button asChild variant="outline" size="icon">
-                    <Link href="/submit-ad">
-                      <Plus className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <>
+                    <Button asChild variant="outline" size="icon">
+                      <Link href="/submit-ad">
+                        <Plus className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                     <Button asChild variant="outline" size="icon" className="relative">
+                      <Link href="/my-messages">
+                        <Mail className="h-4 w-4" />
+                        {hasUnreadMessages && (
+                          <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                          </span>
+                        )}
+                      </Link>
+                    </Button>
+                  </>
                 )}
                 <Button asChild variant="outline" size="icon" className="relative">
                   <Link href={supportLink}>
                     <MessageSquare className="h-4 w-4" />
-                     {hasUnreadMessages && (
+                     {hasUnreadSupportMessages && (
                       <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>

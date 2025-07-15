@@ -5,13 +5,23 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
-import { Loader2, PlayCircle, MapPin, Mail } from 'lucide-react';
-import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
+import { Loader2, PlayCircle, MapPin, Mail, Send } from 'lucide-react';
+import { collection, onSnapshot, query, where, type DocumentData, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -28,10 +38,58 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   
   const handleVideoEnd = () => {
     setIsPlaying(false);
-     if(videoRef.current){
+    if(videoRef.current){
       videoRef.current.currentTime = 0;
     }
   }
+
+  const handleSendMessage = async () => {
+    if (!user) {
+      toast({ title: "Connexion requise", description: "Vous devez être connecté pour envoyer un message.", variant: "destructive" });
+      return;
+    }
+    if(user.uid === ad.userId) {
+      toast({ title: "Action impossible", description: "Vous ne pouvez pas vous envoyer de message.", variant: "destructive" });
+      return;
+    }
+    if (message.trim() === '') return;
+
+    setIsSending(true);
+    try {
+      const conversationId = `${ad.id}_${user.uid}`;
+      const conversationRef = doc(db, 'conversations', conversationId);
+      
+      await setDoc(conversationRef, {
+        adId: ad.id,
+        adTitle: ad.title,
+        sellerId: ad.userId,
+        sellerEmail: ad.userEmail,
+        buyerId: user.uid,
+        buyerEmail: user.email,
+        participants: [ad.userId, user.uid],
+        lastMessage: message,
+        lastMessageTimestamp: serverTimestamp(),
+        sellerUnread: true,
+        buyerUnread: false,
+      }, { merge: true });
+
+      await addDoc(collection(conversationRef, 'messages'), {
+        text: message,
+        senderId: user.uid,
+        timestamp: serverTimestamp(),
+      });
+      
+      toast({ title: "Message envoyé !", description: "Votre message a été envoyé au vendeur." });
+      setMessage('');
+      setIsDialogOpen(false);
+      router.push('/my-messages');
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message:", error);
+      toast({ title: "Erreur", description: "Une erreur est survenue.", variant: "destructive" });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
      <Card className="overflow-hidden relative aspect-square group bg-black">
@@ -74,7 +132,40 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                <Mail className="w-6 h-6 text-white" />
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <button onClick={(e) => { e.stopPropagation(); if(!user) { toast({ title: "Connexion requise", description: "Vous devez être connecté pour contacter le vendeur."}); return; } setIsDialogOpen(true); }} className="p-2 -m-2">
+                       <Mail className="w-6 h-6 text-white" />
+                    </button>
+                  </DialogTrigger>
+                  {user && (
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Contacter le vendeur</DialogTitle>
+                      <DialogDescription>
+                        Envoyer un message à propos de l'annonce "{ad.title}".
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <Textarea 
+                        placeholder="Votre message ici..."
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={5}
+                      />
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                          <Button variant="outline">Annuler</Button>
+                      </DialogClose>
+                      <Button onClick={handleSendMessage} disabled={isSending}>
+                        {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Envoyer
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                  )}
+                </Dialog>
              </div>
            </div>
          </>

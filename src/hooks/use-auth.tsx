@@ -4,12 +4,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isModerator: boolean;
+  hasUnreadSupportMessages: boolean;
   hasUnreadMessages: boolean;
 }
 
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isModerator, setIsModerator] = useState(false);
+  const [hasUnreadSupportMessages, setHasUnreadSupportMessages] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else {
         setUser(null);
         setIsModerator(false);
+        setHasUnreadSupportMessages(false);
         setHasUnreadMessages(false);
       }
       setLoading(false);
@@ -70,7 +73,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     if (!user) {
-      setHasUnreadMessages(false);
+      setHasUnreadSupportMessages(false);
       return;
     }
 
@@ -100,7 +103,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             }
           }
         }
-        setHasUnreadMessages(hasUnread);
+        setHasUnreadSupportMessages(hasUnread);
       });
 
     } else {
@@ -108,7 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const chatDocRef = doc(db, 'supportChats', user.uid);
       unsubscribe = onSnapshot(chatDocRef, async (chatDoc) => {
         if (!chatDoc.exists()) {
-          setHasUnreadMessages(false);
+          setHasUnreadSupportMessages(false);
           return;
         }
         
@@ -123,12 +126,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const lastMessage = messagesSnapshot.docs[0].data();
            if (lastMessage.senderId !== user.uid) {
                const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
-               setHasUnreadMessages(lastMessageTimestamp > userLastRead);
+               setHasUnreadSupportMessages(lastMessageTimestamp > userLastRead);
            } else {
-               setHasUnreadMessages(false);
+               setHasUnreadSupportMessages(false);
            }
         } else {
-            setHasUnreadMessages(false);
+            setHasUnreadSupportMessages(false);
         }
       });
     }
@@ -140,9 +143,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [user, isModerator]);
 
+  useEffect(() => {
+    if (!user || isModerator) {
+        setHasUnreadMessages(false);
+        return;
+    }
+
+    const q = query(collection(db, 'conversations'), where('participants', 'array-contains', user.uid));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        let hasUnread = false;
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (data.sellerId === user.uid && data.sellerUnread) {
+                hasUnread = true;
+                break;
+            }
+            if (data.buyerId === user.uid && data.buyerUnread) {
+                hasUnread = true;
+                break;
+            }
+        }
+        setHasUnreadMessages(hasUnread);
+    });
+
+    return () => unsubscribe();
+  }, [user, isModerator]);
+
 
   return (
-    <AuthContext.Provider value={{ user, loading, isModerator, hasUnreadMessages }}>
+    <AuthContext.Provider value={{ user, loading, isModerator, hasUnreadSupportMessages, hasUnreadMessages }}>
       {children}
     </AuthContext.Provider>
   );

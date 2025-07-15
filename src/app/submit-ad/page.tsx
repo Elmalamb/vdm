@@ -84,6 +84,29 @@ export default function SubmitAdPage() {
     }
   };
 
+  const uploadFile = (file: File, path: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(storage, path);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // This listener is intentionally left for potential individual progress tracking
+        },
+        (error) => {
+          console.error("Upload error:", error);
+          reject(error);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve(downloadURL);
+        }
+      );
+    });
+  };
+
+
 const onSubmit = async (data: AdFormValues) => {
     if (!user) {
         toast({ title: "Erreur", description: "Vous devez être connecté pour soumettre une annonce.", variant: "destructive"});
@@ -142,8 +165,8 @@ const onSubmit = async (data: AdFormValues) => {
     } catch (error) {
         console.error("Erreur lors de la soumission de l'annonce:", error);
         toast({
-            title: "Erreur",
-            description: "Une erreur s'est produite lors de la soumission de votre annonce.",
+            title: "Erreur de téléversement",
+            description: "Une erreur s'est produite. Vérifiez votre connexion ou la configuration du stockage.",
             variant: "destructive",
         });
     } finally {

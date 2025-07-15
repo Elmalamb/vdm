@@ -123,7 +123,6 @@ export default function MessagingPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Annonce</TableHead>
               <TableHead>Vendeur</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -135,7 +134,6 @@ export default function MessagingPage() {
                 onClick={() => setSelectedAdId(conv.adId)}
                 className="cursor-pointer"
               >
-                <TableCell className="font-medium">{conv.adTitle}</TableCell>
                 <TableCell>{conv.sellerEmail}</TableCell>
                 <TableCell className="text-right">
                   {conv.unreadCount > 0 && (

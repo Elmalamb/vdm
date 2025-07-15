@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const ads = [
   {
@@ -111,8 +112,8 @@ export default function ModerationPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                     <Button variant="outline" size="sm">
-                       Voir
+                     <Button asChild variant="outline" size="sm">
+                       <Link href={`/ad/${ad.id}`}>Voir</Link>
                      </Button>
                   </TableCell>
                 </TableRow>

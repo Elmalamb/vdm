@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, Package2, Plus, LogOut } from 'lucide-react';
+import { LogIn, Package2, Plus, LogOut, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, loading, isModerator } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -91,6 +91,7 @@ export function Header() {
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
         role: "membre",
+        uid: user.uid
       });
 
       toast({ title: "Inscription réussie.", description: "Veuillez consulter votre boîte mail pour vérifier votre compte." });
@@ -127,11 +128,20 @@ export function Header() {
           <>
             {user ? (
               <>
-                <Button asChild variant="outline" size="icon">
-                  <Link href="/submit-ad">
-                    <Plus className="h-4 w-4" />
-                  </Link>
-                </Button>
+                {!isModerator && (
+                  <Button asChild variant="outline" size="icon">
+                    <Link href="/submit-ad">
+                      <Plus className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
+                 {!isModerator && (
+                  <Button asChild variant="outline" size="icon">
+                    <Link href="/support">
+                      <MessageSquare className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>

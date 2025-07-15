@@ -133,7 +133,7 @@ export default function ModerationDashboardPage() {
                   </Button>
                 </div>
               ) : (
-                 <span className="text-muted-foreground text-xs">Aucune action</span>
+                 <span className="text-muted-foreground text-xs">Aucune</span>
               )}
             </TableCell>
           </TableRow>

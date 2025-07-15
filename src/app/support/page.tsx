@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
 interface Message {
   id: string;
@@ -43,7 +43,8 @@ export default function SupportPage() {
        if (user) {
         const chatDocRef = doc(db, 'supportChats', user.uid);
         updateDoc(chatDocRef, { userLastRead: serverTimestamp() }).catch(() => {
-             setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
+             // Le document n'existe peut-être pas encore, ce n'est pas une erreur critique ici.
+             // Il sera créé lors de l'envoi du premier message.
         });
       }
     });
@@ -59,8 +60,22 @@ export default function SupportPage() {
     if (newMessage.trim() === '' || !user) return;
 
     const chatDocRef = doc(db, 'supportChats', user.uid);
-    await setDoc(chatDocRef, { userEmail: user.email, userLastRead: serverTimestamp() }, { merge: true });
+    const chatDoc = await getDoc(chatDocRef);
 
+    if (!chatDoc.exists()) {
+      // Crée le document de chat s'il n'existe pas
+      await setDoc(chatDocRef, { 
+        userEmail: user.email, 
+        userLastRead: serverTimestamp() 
+      });
+    } else {
+      // Met à jour le timestamp de lecture si le document existe déjà
+      await updateDoc(chatDocRef, {
+        userLastRead: serverTimestamp()
+      });
+    }
+
+    // Ajoute le nouveau message
     await addDoc(collection(db, `supportChats/${user.uid}/messages`), {
       text: newMessage,
       senderId: user.uid,

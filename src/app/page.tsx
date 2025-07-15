@@ -130,7 +130,7 @@ export default function HomePage() {
       {ads.length === 0 ? (
         <p>Aucune annonce à afficher pour le moment.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {ads.map((ad) => (
             <AdCard key={ad.id} ad={ad} />
           ))}

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, setDoc, updateDoc } from 'firebase/firestore';
 
 interface Message {
   id: string;
@@ -40,6 +40,12 @@ export default function SupportPage() {
         msgs.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(msgs);
+       if (user) {
+        const chatDocRef = doc(db, 'supportChats', user.uid);
+        updateDoc(chatDocRef, { userLastRead: serverTimestamp() }).catch(() => {
+             setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
+        });
+      }
     });
     return () => unsubscribe();
   }, [user]);
@@ -52,9 +58,8 @@ export default function SupportPage() {
     e.preventDefault();
     if (newMessage.trim() === '' || !user) return;
 
-    // Create the conversation document if it doesn't exist
     const chatDocRef = doc(db, 'supportChats', user.uid);
-    await setDoc(chatDocRef, { userEmail: user.email }, { merge: true });
+    await setDoc(chatDocRef, { userEmail: user.email, userLastRead: serverTimestamp() }, { merge: true });
 
     await addDoc(collection(db, `supportChats/${user.uid}/messages`), {
       text: newMessage,

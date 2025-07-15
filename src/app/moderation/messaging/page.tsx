@@ -12,13 +12,13 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Send } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, getDocs, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, getDocs, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 
 interface Conversation {
   userId: string;
   userEmail: string;
   lastMessage?: string;
-  unreadCount?: number;
+  hasUnread?: boolean;
 }
 
 interface Message {
@@ -28,7 +28,7 @@ interface Message {
   timestamp: Timestamp;
 }
 
-const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessage: (userId: string, message: string) => Promise<void> }) => {
+const ChatInterface = ({ userId, onSendMessage, onConversationOpened }: { userId: string, onSendMessage: (userId: string, message: string) => Promise<void>, onConversationOpened: (userId: string) => void }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -36,6 +36,7 @@ const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessag
 
   useEffect(() => {
     if (!userId) return;
+    onConversationOpened(userId);
     const q = query(collection(db, `supportChats/${userId}/messages`), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const msgs: Message[] = [];
@@ -45,7 +46,7 @@ const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessag
       setMessages(msgs);
     });
     return () => unsubscribe();
-  }, [userId]);
+  }, [userId, onConversationOpened]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,28 +100,44 @@ export default function MessagingPage() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const fetchConversations = async () => {
+    if (!user) return;
+  
+    const supportChatsRef = collection(db, 'supportChats');
+    const unsubscribe = onSnapshot(query(supportChatsRef), async (snapshot) => {
       setLoading(true);
-      const supportChatsRef = collection(db, 'supportChats');
-      const supportChatsSnapshot = await getDocs(supportChatsRef);
       const convos: Conversation[] = [];
       
-      for (const chatDoc of supportChatsSnapshot.docs) {
-          const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", chatDoc.id)));
-          const userEmail = chatDoc.data().userEmail || "Email inconnu";
-          
-          convos.push({
-              userId: chatDoc.id,
-              userEmail: userEmail
-          });
+      for (const chatDoc of snapshot.docs) {
+        const userEmail = chatDoc.data().userEmail || "Email inconnu";
+        const lastReadTimestamp = chatDoc.data().moderatorLastRead || 0;
+        
+        const messagesRef = collection(db, `supportChats/${chatDoc.id}/messages`);
+        const messagesSnapshot = await getDocs(query(messagesRef, where('senderId', '!=', user.uid), orderBy('senderId')));
+        
+        let hasUnread = false;
+        if (!messagesSnapshot.empty) {
+            const lastMessageSnapshot = await getDocs(query(messagesRef, orderBy('timestamp', 'desc'), where('senderId', '!=', user.uid)));
+            if(!lastMessageSnapshot.empty){
+                const lastMessageTimestamp = lastMessageSnapshot.docs[0].data().timestamp?.toMillis() || 0;
+                if (lastMessageTimestamp > lastReadTimestamp) {
+                    hasUnread = true;
+                }
+            }
+        }
+  
+        convos.push({
+          userId: chatDoc.id,
+          userEmail: userEmail,
+          hasUnread: hasUnread,
+        });
       }
-
-      setConversations(convos);
+      
+      setConversations(convos.sort((a, b) => (b.hasUnread ? 1 : 0) - (a.hasUnread ? 1 : 0)));
       setLoading(false);
-    };
-
-    fetchConversations();
-  }, []);
+    });
+  
+    return () => unsubscribe();
+  }, [user]);
 
   const handleSendMessage = async (userId: string, message: string) => {
     if (!user) return;
@@ -129,6 +146,18 @@ export default function MessagingPage() {
       senderId: user.uid,
       timestamp: serverTimestamp(),
     });
+     await updateDoc(doc(db, 'supportChats', userId), {
+      moderatorLastRead: serverTimestamp(),
+    });
+  };
+
+  const handleConversationOpened = async (userId: string) => {
+    if (!user) return;
+    const chatDocRef = doc(db, 'supportChats', userId);
+    await updateDoc(chatDocRef, {
+      moderatorLastRead: serverTimestamp(),
+    });
+    setSelectedUserId(userId);
   };
 
   if(loading){
@@ -142,16 +171,20 @@ export default function MessagingPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Utilisateur</TableHead>
+              <TableHead>Statut</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {conversations.map((conv) => (
               <TableRow 
                 key={conv.userId} 
-                onClick={() => setSelectedUserId(conv.userId)}
+                onClick={() => handleConversationOpened(conv.userId)}
                 className="cursor-pointer"
               >
-                <TableCell>{conv.userEmail}</TableCell>
+                <TableCell className={conv.hasUnread ? 'font-bold' : ''}>{conv.userEmail}</TableCell>
+                 <TableCell>
+                  {conv.hasUnread && <Badge variant="destructive">Nouveau message</Badge>}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -159,7 +192,7 @@ export default function MessagingPage() {
       </div>
        <div>
         {selectedUserId ? (
-          <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage}/>
+          <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage} onConversationOpened={handleConversationOpened} />
         ) : (
           <Card className="flex items-center justify-center h-[500px]">
             <CardContent>

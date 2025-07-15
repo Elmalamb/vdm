@@ -36,46 +36,41 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   }
 
   return (
-     <Card className="overflow-hidden flex flex-col">
-        <CardHeader className="p-0">
-           <div className="aspect-square relative bg-black cursor-pointer group" onClick={togglePlay}>
-             {ad.videoUrl ? (
-               <>
-                 <video
-                   ref={videoRef}
-                   src={ad.videoUrl}
-                   playsInline
-                   loop={false}
-                   className="w-full h-full object-cover"
-                   poster={ad.imageUrl}
-                   onEnded={handleVideoEnd}
-                   onPlay={() => setIsPlaying(true)}
-                   onPause={() => setIsPlaying(false)}
-                 >
-                   Votre navigateur ne supporte pas la balise vidéo.
-                 </video>
-                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {!isPlaying ? (
-                       <PlayCircle className="w-16 h-16 text-white" />
-                    ) : (
-                       <PauseCircle className="w-16 h-16 text-white" />
-                    )}
-                 </div>
-               </>
-             ) : (
-               <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
-                 <span>Vidéo non disponible</span>
-               </div>
-             )}
+     <Card className="overflow-hidden relative aspect-square group bg-black">
+       {ad.videoUrl ? (
+          <video
+            ref={videoRef}
+            src={ad.videoUrl}
+            playsInline
+            loop={false}
+            className="w-full h-full object-cover"
+            poster={ad.imageUrl}
+            onEnded={handleVideoEnd}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onClick={togglePlay}
+          >
+            Votre navigateur ne supporte pas la balise vidéo.
+          </video>
+       ) : (
+         <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
+           <span>Vidéo non disponible</span>
+         </div>
+       )}
+       
+       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={togglePlay}>
+          {!isPlaying && <PlayCircle className="w-16 h-16 text-white" />}
+       </div>
+
+       <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+         <div className="flex justify-between items-end">
+           <div>
+             <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
+             <p className="text-sm text-gray-300">Code Postal: {ad.postalCode}</p>
            </div>
-        </CardHeader>
-       <CardContent className="p-4 flex-grow">
-          <CardTitle className="text-sm font-normal text-muted-foreground mb-1 truncate">{ad.title}</CardTitle>
-          <CardDescription>Code Postal: {ad.postalCode}</CardDescription>
-       </CardContent>
-       <CardFooter className="p-4 pt-0">
-          <p className="text-lg font-bold text-primary">{ad.price}€</p>
-       </CardFooter>
+           <p className="text-lg font-bold text-white">{ad.price}€</p>
+         </div>
+       </div>
      </Card>
   );
 };

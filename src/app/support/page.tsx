@@ -24,20 +24,15 @@ export default function SupportPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [chatInitialized, setChatInitialized] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/');
-    } else if (user) {
-        // We consider the chat initialized once we have a user.
-        // The message listener will handle creating the doc if it doesn't exist.
-        setChatInitialized(true);
     }
   }, [user, loading, router]);
   
   useEffect(() => {
-    if (!chatInitialized || !user) return;
+    if (!user) return;
 
     const q = query(collection(db, `supportChats/${user.uid}/messages`), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -50,16 +45,15 @@ export default function SupportPage() {
         const chatDocRef = doc(db, 'supportChats', user.uid);
         // This will create the doc if it doesn't exist on first message read
         // or update the timestamp if it does.
-        updateDoc(chatDocRef, { userLastRead: serverTimestamp() }).catch(async (error) => {
-             // If it fails because it doesn't exist, we create it.
-             if(error.code === 'not-found') {
-                await setDoc(chatDocRef, { userEmail: user.email, userLastRead: serverTimestamp() });
-             }
+        getDoc(chatDocRef).then(docSnap => {
+            if(docSnap.exists()){
+                updateDoc(chatDocRef, { userLastRead: serverTimestamp() });
+            }
         });
       }
     });
     return () => unsubscribe();
-  }, [user, chatInitialized]);
+  }, [user]);
 
 
   useEffect(() => {
@@ -71,30 +65,37 @@ export default function SupportPage() {
     if (newMessage.trim() === '' || !user) return;
 
     const chatDocRef = doc(db, 'supportChats', user.uid);
+    const messagesCollectionRef = collection(db, `supportChats/${user.uid}/messages`);
     
-    // Ensure the chat document exists before adding a message.
-    const chatDoc = await getDoc(chatDocRef);
-    if (!chatDoc.exists()) {
-      await setDoc(chatDocRef, { 
-        userEmail: user.email,
-        createdAt: serverTimestamp(),
-        userLastRead: serverTimestamp()
-      });
+    try {
+        const chatDoc = await getDoc(chatDocRef);
+        
+        if (!chatDoc.exists()) {
+          // Le document de chat n'existe pas, on le crée avec les infos initiales.
+          await setDoc(chatDocRef, { 
+            userEmail: user.email, // L'email est stocké une seule fois à la création.
+            createdAt: serverTimestamp(),
+            userLastRead: serverTimestamp(),
+          });
+        }
+    
+        // On ajoute le message
+        await addDoc(messagesCollectionRef, {
+          text: newMessage,
+          senderId: user.uid,
+          timestamp: serverTimestamp(),
+        });
+
+         // On met à jour la date de dernière lecture
+        await updateDoc(chatDocRef, {
+            userLastRead: serverTimestamp()
+        });
+    
+        setNewMessage('');
+
+    } catch(error) {
+        console.error("Erreur lors de l'envoi du message:", error);
     }
-
-    // Add the new message to the messages subcollection.
-    await addDoc(collection(db, `supportChats/${user.uid}/messages`), {
-      text: newMessage,
-      senderId: user.uid,
-      timestamp: serverTimestamp(),
-    });
-    
-    // Also update the user's last read timestamp.
-    await updateDoc(chatDocRef, {
-        userLastRead: serverTimestamp()
-    });
-
-    setNewMessage('');
   };
 
   if (loading || !user) {

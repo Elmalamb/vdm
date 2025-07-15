@@ -108,20 +108,20 @@ export default function MessagingPage() {
       const convos: Conversation[] = [];
       
       for (const chatDoc of snapshot.docs) {
-        const userEmail = chatDoc.data().userEmail || "Email inconnu";
-        const lastReadTimestamp = chatDoc.data().moderatorLastRead || 0;
+        const chatData = chatDoc.data();
+        const userEmail = chatData.userEmail || "Email inconnu";
+        const moderatorLastRead = chatData.moderatorLastRead?.toMillis() || 0;
         
         const messagesRef = collection(db, `supportChats/${chatDoc.id}/messages`);
-        const messagesSnapshot = await getDocs(query(messagesRef, where('senderId', '!=', user.uid), orderBy('senderId')));
+        const q = query(messagesRef, orderBy('timestamp', 'desc'));
+        const messagesSnapshot = await getDocs(q);
         
         let hasUnread = false;
         if (!messagesSnapshot.empty) {
-            const lastMessageSnapshot = await getDocs(query(messagesRef, orderBy('timestamp', 'desc'), where('senderId', '!=', user.uid)));
-            if(!lastMessageSnapshot.empty){
-                const lastMessageTimestamp = lastMessageSnapshot.docs[0].data().timestamp?.toMillis() || 0;
-                if (lastMessageTimestamp > lastReadTimestamp) {
-                    hasUnread = true;
-                }
+            const lastMessage = messagesSnapshot.docs[0].data();
+            const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
+            if (lastMessageTimestamp > moderatorLastRead && lastMessage.senderId !== user.uid) {
+                hasUnread = true;
             }
         }
   
@@ -153,11 +153,13 @@ export default function MessagingPage() {
 
   const handleConversationOpened = async (userId: string) => {
     if (!user) return;
+    setSelectedUserId(userId);
     const chatDocRef = doc(db, 'supportChats', userId);
     await updateDoc(chatDocRef, {
       moderatorLastRead: serverTimestamp(),
-    });
-    setSelectedUserId(userId);
+    }).catch(e => console.error("Could not update moderator last read timestamp", e));
+
+    setConversations(prev => prev.map(c => c.userId === userId ? {...c, hasUnread: false} : c));
   };
 
   if(loading){

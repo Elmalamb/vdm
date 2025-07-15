@@ -6,7 +6,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRouter, useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Image from 'next/image';
 import { doc, getDoc, DocumentData, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
@@ -68,41 +67,45 @@ export default function AdDetailPage() {
 
   return (
     <div className="container mx-auto py-8 flex justify-center">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-4xl">
         <Card className="overflow-hidden">
-          {adDetails.videoUrl && (
-             <CardHeader className="p-0">
-               <AspectRatio ratio={16 / 9}>
-                 <video
-                   src={adDetails.videoUrl}
-                   controls
-                   className="w-full h-full object-cover bg-black"
-                   poster={adDetails.imageUrl}
-                 >
-                   Votre navigateur ne supporte pas la balise vidéo.
-                 </video>
-               </AspectRatio>
-            </CardHeader>
+          {adDetails.videoUrl ? (
+            <div className="relative">
+              <AspectRatio ratio={16 / 9}>
+                <video
+                  src={adDetails.videoUrl}
+                  controls
+                  className="w-full h-full object-cover bg-black"
+                  poster={adDetails.imageUrl}
+                >
+                  Votre navigateur ne supporte pas la balise vidéo.
+                </video>
+              </AspectRatio>
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                <CardTitle className="text-3xl font-bold leading-tight text-white shadow-lg">{adDetails.title}</CardTitle>
+                <CardDescription className="text-gray-200 shadow-lg">Code Postal: {adDetails.postalCode}</CardDescription>
+                <p className="text-4xl font-extrabold mt-4 text-white shadow-lg">{adDetails.price}€</p>
+              </div>
+            </div>
+          ) : (
+             <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-1">
+                   <AspectRatio ratio={1 / 1}>
+                     <img
+                        src={adDetails.imageUrl || 'https://placehold.co/400x400.png'}
+                        alt={adDetails.title}
+                        className="rounded-md object-cover w-full h-full"
+                        data-ai-hint={adDetails.dataAiHint || 'image produit'}
+                      />
+                   </AspectRatio>
+                </div>
+                <div className="md:col-span-1 flex flex-col justify-center">
+                  <CardTitle className="text-2xl font-bold leading-tight mb-2">{adDetails.title}</CardTitle>
+                  <CardDescription>Code Postal: {adDetails.postalCode}</CardDescription>
+                  <p className="text-3xl font-extrabold mt-4">{adDetails.price}€</p>
+                </div>
+            </CardContent>
           )}
-          <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
-               <div className="aspect-square relative">
-                 <Image
-                    src={adDetails.imageUrl || 'https://placehold.co/400x400.png'}
-                    alt={adDetails.title}
-                    layout="fill"
-                    objectFit="cover"
-                    className="rounded-md"
-                    data-ai-hint={adDetails.dataAiHint || 'image produit'}
-                  />
-               </div>
-            </div>
-            <div className="md:col-span-2">
-              <CardTitle className="text-2xl font-bold leading-tight mb-2">{adDetails.title}</CardTitle>
-              <CardDescription>Code Postal: {adDetails.postalCode}</CardDescription>
-              <p className="text-3xl font-extrabold mt-4">{adDetails.price}€</p>
-            </div>
-          </CardContent>
         </Card>
       </div>
     </div>

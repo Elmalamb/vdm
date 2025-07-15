@@ -55,17 +55,17 @@ export default function ModerationLayout({
         <CardContent>
           <div className="flex border-b mb-4">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} legacyBehavior passHref>
-                <a
-                  className={cn(
-                    "py-2 px-4 -mb-px border-b-2 text-sm font-medium",
-                    pathname === item.href
-                      ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {item.label}
-                </a>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "py-2 px-4 -mb-px border-b-2 text-sm font-medium",
+                  pathname === item.href
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.label}
               </Link>
             ))}
           </div>

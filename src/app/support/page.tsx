@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, type Timestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 interface Message {
   id: string;
@@ -34,27 +34,25 @@ export default function SupportPage() {
   useEffect(() => {
     if (!user) return;
 
-    const q = query(collection(db, `supportChats/${user.uid}/messages`), orderBy('timestamp', 'asc'));
+    const messagesCollectionRef = collection(db, `supportChats/${user.uid}/messages`);
+    const q = query(messagesCollectionRef, orderBy('timestamp', 'asc'));
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const msgs: Message[] = [];
       querySnapshot.forEach((doc) => {
         msgs.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(msgs);
-       if (user) {
+      
+      // Marquer les messages comme lus par l'utilisateur
+      if (user) {
         const chatDocRef = doc(db, 'supportChats', user.uid);
-        // This will create the doc if it doesn't exist on first message read
-        // or update the timestamp if it does.
-        getDoc(chatDocRef).then(docSnap => {
-            if(docSnap.exists()){
-                updateDoc(chatDocRef, { userLastRead: serverTimestamp() });
-            }
-        });
+        setDoc(chatDocRef, { userLastRead: serverTimestamp() }, { merge: true });
       }
     });
+
     return () => unsubscribe();
   }, [user]);
-
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -68,33 +66,23 @@ export default function SupportPage() {
     const messagesCollectionRef = collection(db, `supportChats/${user.uid}/messages`);
     
     try {
-        const chatDoc = await getDoc(chatDocRef);
-        
-        if (!chatDoc.exists()) {
-          // Le document de chat n'existe pas, on le crée avec les infos initiales.
-          await setDoc(chatDocRef, { 
-            userEmail: user.email, // L'email est stocké une seule fois à la création.
-            createdAt: serverTimestamp(),
-            userLastRead: serverTimestamp(),
-          });
-        }
-    
-        // On ajoute le message
-        await addDoc(messagesCollectionRef, {
-          text: newMessage,
-          senderId: user.uid,
-          timestamp: serverTimestamp(),
-        });
+      // 1. Crée ou met à jour le document de chat avec les informations utilisateur et la date de lecture.
+      // L'option { merge: true } est cruciale ici.
+      await setDoc(chatDocRef, { 
+        userEmail: user.email,
+        userLastRead: serverTimestamp(),
+      }, { merge: true });
 
-         // On met à jour la date de dernière lecture
-        await updateDoc(chatDocRef, {
-            userLastRead: serverTimestamp()
-        });
+      // 2. Ajoute le nouveau message.
+      await addDoc(messagesCollectionRef, {
+        text: newMessage,
+        senderId: user.uid,
+        timestamp: serverTimestamp(),
+      });
     
-        setNewMessage('');
-
+      setNewMessage('');
     } catch(error) {
-        console.error("Erreur lors de l'envoi du message:", error);
+        console.error("Erreur détaillée lors de l'envoi du message:", error);
     }
   };
 

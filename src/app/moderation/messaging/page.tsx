@@ -124,7 +124,7 @@ export default function MessagingPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Vendeur</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+              <TableHead className="text-right"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

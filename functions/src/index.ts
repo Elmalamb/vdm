@@ -11,14 +11,14 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import {onUserCreate, UserEvent} from "firebase-functions/v2/auth";
+import {auth as authFunctions} from "firebase-functions";
+
 
 admin.initializeApp();
 const db = admin.firestore();
 const storage = admin.storage();
 
-export const createUserDocument = onUserCreate(async (event: UserEvent) => {
-  const user = event.data;
+export const createUserDocument = authFunctions.user().onCreate(async (user) => {
   const {uid, email} = user;
 
   const userDocRef = db.collection("users").doc(uid);

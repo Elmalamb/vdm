@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, updateDoc, getDoc, Unsubscribe } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -142,33 +142,45 @@ export default function MyMessagesPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    const q = query(
-      collection(db, 'conversations'),
-      where('participants', 'array-contains', user.uid),
-      orderBy('lastMessageTimestamp', 'desc')
-    );
+    let unsubscribe: Unsubscribe | undefined;
+    if (user) {
+      setLoading(true);
+      const q = query(
+        collection(db, 'conversations'),
+        where('participants', 'array-contains', user.uid),
+        orderBy('lastMessageTimestamp', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const convos = snapshot.docs.map(doc => {
-        const data = doc.data();
-        const isSeller = data.sellerId === user.uid;
-        const otherUserEmail = isSeller ? data.buyerEmail : data.sellerEmail;
-        const unread = isSeller ? data.sellerUnread : data.buyerUnread;
-        return {
-          id: doc.id,
-          adTitle: data.adTitle,
-          otherUserEmail,
-          lastMessage: data.lastMessage,
-          unread,
-        }
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const convos = snapshot.docs.map(doc => {
+          const data = doc.data();
+          const isSeller = data.sellerId === user.uid;
+          const otherUserEmail = isSeller ? data.buyerEmail : data.sellerEmail;
+          const unread = isSeller ? data.sellerUnread : data.buyerUnread;
+          return {
+            id: doc.id,
+            adTitle: data.adTitle,
+            otherUserEmail,
+            lastMessage: data.lastMessage,
+            unread,
+          }
+        });
+        setConversations(convos);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error in conversations listener:", error);
+        setLoading(false);
       });
-      setConversations(convos);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    } else {
+        setConversations([]);
+        setLoading(false);
+    }
+    
+    return () => {
+        if(unsubscribe) {
+            unsubscribe();
+        }
+    };
   }, [user]);
 
   const handleConversationSelect = async (conversationId: string) => {

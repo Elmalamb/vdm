@@ -4,11 +4,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Card } from '@/components/ui/card';
-import { Loader2, PlayCircle, MapPin, Mail } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Loader2, PlayCircle, MapPin, Mail, Search, CircleDollarSign } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Button } from '@/components/ui/button';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -97,6 +97,9 @@ export default function HomePage() {
   const router = useRouter();
   const [ads, setAds] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [postalCodeFilter, setPostalCodeFilter] = useState('');
+  const [maxPriceFilter, setMaxPriceFilter] = useState('');
 
   useEffect(() => {
     if (!authLoading && isModerator) {
@@ -121,6 +124,19 @@ export default function HomePage() {
     
     return () => unsubscribe();
   }, []);
+
+  const filteredAds = ads.filter(ad => {
+    const searchTermMatch = searchTerm.trim() === '' || 
+                            ad.title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const postalCodeMatch = postalCodeFilter.trim() === '' ||
+                            ad.postalCode.startsWith(postalCodeFilter.trim());
+
+    const maxPriceMatch = maxPriceFilter === '' ||
+                          ad.price <= parseFloat(maxPriceFilter);
+
+    return searchTermMatch && postalCodeMatch && maxPriceMatch;
+  });
   
   if (authLoading || loading) {
     return (
@@ -134,11 +150,52 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto py-8">
-      {ads.length === 0 ? (
-        <p>Aucune annonce à afficher pour le moment.</p>
+      <Card className="mb-8 shadow-sm">
+        <CardHeader>
+          <CardTitle>Rechercher une annonce</CardTitle>
+          <CardDescription>Affinez votre recherche avec des mots-clés, un code postal ou un prix maximum.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Mots-clés (ex: table, chaise)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="relative">
+              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Code postal..."
+                value={postalCodeFilter}
+                onChange={(e) => setPostalCodeFilter(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="relative">
+              <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                type="number"
+                placeholder="Prix maximum..."
+                value={maxPriceFilter}
+                onChange={(e) => setMaxPriceFilter(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {filteredAds.length === 0 ? (
+         <div className="text-center py-16">
+          <p className="text-muted-foreground">Aucune annonce ne correspond à vos critères de recherche.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ads.map((ad) => (
+          {filteredAds.map((ad) => (
             <AdCard key={ad.id} ad={ad} />
           ))}
         </div>

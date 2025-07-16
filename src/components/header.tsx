@@ -145,17 +145,17 @@ export function Header() {
                     </Button>
                   </>
                 )}
-                 <Button asChild variant="ghost" size="icon" className="relative">
-                  <Link href={messagesLink}>
-                    <MessageSquare className="h-4 w-4" />
-                     {shouldShowNotification && (
-                      <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                      </span>
-                    )}
-                  </Link>
-                </Button>
+                 <Link href={messagesLink}>
+                    <Button variant="ghost" size="icon" className="relative">
+                        <MessageSquare className="h-4 w-4" />
+                        {shouldShowNotification && (
+                        <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                        )}
+                    </Button>
+                 </Link>
                 <Button variant="ghost" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>

@@ -8,7 +8,7 @@ import { Loader2, Eye, Check, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { collection, getDocs, query, type DocumentData, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, query, type DocumentData, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -83,6 +83,25 @@ export default function ModerationDashboardPage() {
     }
   };
 
+  const handleDeleteAd = async (adId: string) => {
+    const adRef = doc(db, "ads", adId);
+    try {
+      await deleteDoc(adRef);
+      setAds(prevAds => prevAds.filter(ad => ad.id !== adId));
+      toast({
+        title: "Annonce supprimée",
+        description: "L'annonce a été supprimée avec succès.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'annonce:", error);
+      toast({
+        title: "Erreur",
+        description: "La suppression de l'annonce a échoué.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex h-full w-full items-center justify-center py-10">
@@ -90,6 +109,32 @@ export default function ModerationDashboardPage() {
       </div>
     );
   }
+
+  const renderActions = (ad: DocumentData) => {
+    switch (ad.status) {
+      case 'pending':
+        return (
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="icon" onClick={() => handleUpdateStatus(ad.id, 'approved')}>
+              <Check className="h-4 w-4" />
+            </Button>
+            <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(ad.id, 'rejected')}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      case 'approved':
+        return (
+          <Button variant="destructive" size="icon" onClick={() => handleDeleteAd(ad.id)}>
+            <X className="h-4 w-4" />
+          </Button>
+        );
+      case 'rejected':
+        return <span className="text-muted-foreground text-xs">Aucune</span>;
+      default:
+        return null;
+    }
+  };
 
   return (
     <Table>
@@ -123,18 +168,7 @@ export default function ModerationDashboardPage() {
               </div>
             </TableCell>
             <TableCell className="text-right">
-              {ad.status === 'pending' ? (
-                <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="icon" onClick={() => handleUpdateStatus(ad.id, 'approved')}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(ad.id, 'rejected')}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                 <span className="text-muted-foreground text-xs">Aucune</span>
-              )}
+              {renderActions(ad)}
             </TableCell>
           </TableRow>
         ))}

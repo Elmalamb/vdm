@@ -5,12 +5,12 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
-import { Loader2, PlayCircle, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, PlayCircle, MapPin, Eye, Pencil } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData, type Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Eye } from 'lucide-react';
 
-const AdCard = ({ ad }: { ad: DocumentData }) => {
+const AdCard = ({ ad, onEdit }: { ad: DocumentData, onEdit: (adId: string) => void }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const router = useRouter();
@@ -37,6 +37,11 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
 
   const handleCardClick = () => {
     router.push(`/ad/${ad.id}`);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(ad.id);
   };
 
   return (
@@ -67,13 +72,20 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
       <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={togglePlay}>
         {!isPlaying && ad.videoUrl && <PlayCircle className="w-16 h-16 text-white hidden md:block" />}
       </div>
+      
+      <Button
+        variant="secondary"
+        size="icon"
+        className="absolute top-2 left-2 z-10 h-8 w-8"
+        onClick={handleEditClick}
+      >
+        <Pencil className="h-4 w-4" />
+        <span className="sr-only">Modifier l'annonce</span>
+      </Button>
 
       {!isPlaying && (
         <>
-          <div className="absolute top-0 left-0 p-4">
-            <p className="text-lg font-bold text-primary-foreground bg-primary/80 rounded-full px-3 py-1">{ad.price}€</p>
-          </div>
-           <div className="absolute top-0 right-0 p-4">
+          <div className="absolute top-0 right-0 m-2 z-10">
             <div className="flex items-center gap-2 text-primary-foreground bg-primary/80 rounded-full px-3 py-1 text-sm">
                 <Eye className="w-4 h-4" />
                 <span>{ad.views || 0}</span>
@@ -82,6 +94,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
             <div className="flex justify-between items-end">
               <div className="min-w-0">
+                 <p className="text-lg font-bold text-primary-foreground">{ad.price}€</p>
                 <h3 className="text-sm font-normal text-white">{ad.title}</h3>
                 <div className="flex items-center gap-1 text-sm text-gray-300">
                   <MapPin className="w-4 h-4" />
@@ -141,6 +154,10 @@ export default function MyAdsPage() {
     };
   }, [user]);
 
+  const handleEdit = (adId: string) => {
+    router.push(`/my-ads/edit/${adId}`);
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex-1 w-full flex items-center justify-center">
@@ -160,7 +177,7 @@ export default function MyAdsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {ads.map((ad) => (
-            <AdCard key={ad.id} ad={ad} />
+            <AdCard key={ad.id} ad={ad} onEdit={handleEdit} />
           ))}
         </div>
       )}

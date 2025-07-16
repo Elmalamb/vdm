@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, useParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -18,6 +18,7 @@ export default function AdDetailPage() {
   const adId = typeof params.id === 'string' ? params.id : '';
   const [adDetails, setAdDetails] = useState<DocumentData | null>(null);
   const [loading, setLoading] = useState(true);
+  const viewIncrementedRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,9 +38,6 @@ export default function AdDetailPage() {
              setAdDetails(null);
           } else {
             setAdDetails(adData);
-            if(adData.status === 'approved' && user && adData.userId !== user.uid) {
-                 await updateDoc(adRef, { views: increment(1) });
-            }
           }
         } else {
           setAdDetails(null);
@@ -48,7 +46,21 @@ export default function AdDetailPage() {
       };
       fetchAdDetails();
     }
-  }, [adId, isModerator, user]);
+  }, [adId, isModerator]);
+  
+  useEffect(() => {
+    const incrementView = async () => {
+      if (!authLoading && adDetails && !viewIncrementedRef.current) {
+        if (adDetails.status === 'approved' && user && adDetails.userId !== user.uid) {
+          const adRef = doc(db, 'ads', adId);
+          await updateDoc(adRef, { views: increment(1) });
+          viewIncrementedRef.current = true;
+        }
+      }
+    };
+    incrementView();
+  }, [authLoading, adDetails, user, adId]);
+
 
   if (authLoading || loading) {
     return (

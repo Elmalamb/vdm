@@ -19,7 +19,7 @@ export const FloatingSupportButton = () => {
       aria-label="Contacter le support" 
       className="fixed bottom-20 right-6 z-30"
     >
-      <CircleHelp className="h-12 w-12 text-sky-500 transition-transform hover:scale-110" />
+      <CircleHelp className="h-10 w-10 text-sky-500 transition-transform hover:scale-110" />
     </Link>
   );
 };

@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, PlayCircle, MapPin, Mail, Search, CircleDollarSign } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
@@ -149,13 +149,9 @@ export default function HomePage() {
   if(isModerator) return null;
 
   return (
-    <div className="container mx-auto py-8">
-      <Card className="mb-8 shadow-sm">
-        <CardHeader>
-          <CardTitle>Rechercher une annonce</CardTitle>
-          <CardDescription>Affinez votre recherche avec des mots-clés, un code postal ou un prix maximum.</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <>
+      <div className="sticky top-14 z-10 bg-background border-b">
+        <div className="container mx-auto px-4 py-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -186,20 +182,22 @@ export default function HomePage() {
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
       
-      {filteredAds.length === 0 ? (
-         <div className="text-center py-16">
-          <p className="text-muted-foreground">Aucune annonce ne correspond à vos critères de recherche.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAds.map((ad) => (
-            <AdCard key={ad.id} ad={ad} />
-          ))}
-        </div>
-      )}
-    </div>
+      <div className="container mx-auto py-8">
+        {filteredAds.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground">Aucune annonce ne correspond à vos critères de recherche.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAds.map((ad) => (
+              <AdCard key={ad.id} ad={ad} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 };

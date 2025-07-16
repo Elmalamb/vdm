@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, PlayCircle, MapPin, Mail, Search, CircleDollarSign } from 'lucide-react';
-import { collection, onSnapshot, query, where, type DocumentData, getDocs, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type DocumentData, getDocs, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -59,9 +59,9 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
     const conversationRef = doc(db, 'conversations', conversationId);
     
     try {
-      const docSnap = await getDocs(query(collection(db, 'conversations'), where('id', '==', conversationId)));
+      const docSnap = await getDoc(conversationRef);
 
-      if (docSnap.empty) {
+      if (!docSnap.exists()) {
         await setDoc(conversationRef, {
           id: conversationId,
           adId: ad.id,

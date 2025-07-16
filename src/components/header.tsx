@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, LogOut, MessageSquare, Handshake, LayoutList, Plus, CircleHelp } from 'lucide-react';
+import { LogIn, LogOut, LayoutList, Plus, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
 import { doc, setDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Adresse e-mail invalide." }),
@@ -41,6 +42,7 @@ export function Header() {
   const { toast } = useToast();
   const { user, loading, isModerator } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -116,13 +118,17 @@ export function Header() {
       toast({ title: "Erreur de déconnexion", variant: "destructive" });
     }
   };
+
+  const handleRefresh = () => {
+    router.refresh();
+  };
   
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-blue-950 text-white border-b sticky top-0 z-20">
-      <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
+      <button onClick={handleRefresh} className="flex items-center justify-center gap-2" aria-label="Actualiser la page">
         <span className="font-bold text-white">VenteDémo</span>
         <Handshake className="h-6 w-6 text-red-600" />
-      </Link>
+      </button>
       <nav className="ml-auto flex gap-4 sm:gap-6">
         {!loading && (
           <>

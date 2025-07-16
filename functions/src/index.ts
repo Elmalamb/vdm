@@ -11,7 +11,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import { onUserCreate } from "firebase-functions/v2/auth";
+import {onUserCreate} from "firebase-functions/v2/auth";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -19,7 +19,7 @@ const storage = admin.storage();
 
 export const createUserDocument = onUserCreate(async (event) => {
   const user = event.data;
-  const { uid, email } = user;
+  const {uid, email} = user;
 
   const userDocRef = db.collection("users").doc(uid);
 
@@ -104,7 +104,10 @@ export const deleteAd = onCall(async (request) => {
     // Delete the Firestore document
     await adDocRef.delete();
 
-    logger.info(`Ad ${adId} and associated files successfully deleted by moderator ${uid}.`);
+    logger.info(
+      `Ad ${adId} and associated files successfully deleted ` +
+      `by moderator ${uid}.`
+    );
     return {success: true};
   } catch (error) {
     logger.error(

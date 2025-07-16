@@ -79,7 +79,11 @@ export function Header() {
       loginForm.reset();
     } catch (error) {
       console.error("Erreur de connexion:", error);
-      toast({ title: "Erreur de connexion", description: "Veuillez vérifier vos identifiants.", variant: "destructive" });
+      let description = "Une erreur inconnue s'est produite.";
+      if ((error as AuthError).code === 'auth/invalid-credential') {
+        description = "L'adresse e-mail ou le mot de passe est incorrect.";
+      }
+      toast({ title: "Erreur de connexion", description, variant: "destructive" });
     }
   };
 

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, LogOut, MessageSquare, Handshake, LayoutList } from 'lucide-react';
+import { LogIn, LogOut, MessageSquare, Handshake, LayoutList, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -136,6 +136,11 @@ export function Header() {
                       <Link href="/my-ads">
                         <LayoutList className="h-4 w-4" />
                       </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="icon">
+                       <Link href="/submit-ad">
+                          <Plus className="h-4 w-4" />
+                       </Link>
                     </Button>
                     <Button asChild variant="ghost" size="icon" className="relative">
                       <Link href={supportLink}>

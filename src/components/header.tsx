@@ -118,17 +118,13 @@ export function Header() {
       toast({ title: "Erreur de déconnexion", variant: "destructive" });
     }
   };
-
-  const handleRefresh = () => {
-    router.refresh();
-  };
   
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-blue-950 text-white border-b sticky top-0 z-20">
-      <button onClick={handleRefresh} className="flex items-center justify-center gap-2" aria-label="Actualiser la page">
+      <Link href="/" className="flex items-center justify-center gap-2" aria-label="Retour à l'accueil">
         <span className="font-bold text-white">VenteDémo</span>
         <Handshake className="h-6 w-6 text-red-600" />
-      </button>
+      </Link>
       <nav className="ml-auto flex gap-4 sm:gap-6">
         {!loading && (
           <>

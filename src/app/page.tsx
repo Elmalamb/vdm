@@ -45,7 +45,8 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   const handleContactSeller = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!user) {
-      toast({ title: "Connexion requise", description: "Vous devez être connecté pour contacter un vendeur.", variant: "destructive"});
+      const subject = encodeURIComponent(`À propos de votre annonce : "${ad.title}"`);
+      window.location.href = `mailto:${ad.userEmail}?subject=${subject}`;
       return;
     }
 

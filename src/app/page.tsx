@@ -128,13 +128,15 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                <button
-                  onClick={handleContactSeller}
-                  className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"
-                  aria-label="Contacter le vendeur"
-                >
-                  <Mail className="w-6 h-6" />
-                </button>
+                {(!user || user.uid !== ad.userId) && (
+                  <button
+                    onClick={handleContactSeller}
+                    className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"
+                    aria-label="Contacter le vendeur"
+                  >
+                    <Mail className="w-6 h-6" />
+                  </button>
+                )}
              </div>
            </div>
          </>

@@ -132,14 +132,14 @@ export function Header() {
               <>
                 {!isModerator && (
                   <>
-                    <Button asChild variant="outline" size="icon">
+                    <Button asChild variant="ghost" size="icon">
                       <Link href="/my-ads">
                         <LayoutList className="h-4 w-4" />
                       </Link>
                     </Button>
                   </>
                 )}
-                <Button asChild variant="outline" size="icon" className="relative">
+                <Button asChild variant="ghost" size="icon" className="relative">
                   <Link href={supportLink}>
                     <MessageSquare className="h-4 w-4" />
                      {hasUnreadSupportMessages && (
@@ -150,14 +150,14 @@ export function Header() {
                     )}
                   </Link>
                 </Button>
-                <Button variant="outline" size="icon" onClick={handleLogout}>
+                <Button variant="ghost" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="ghost" size="icon">
                     <LogIn className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -250,5 +250,3 @@ export function Header() {
     </header>
   );
 }
-
-    

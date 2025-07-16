@@ -120,7 +120,7 @@ export function Header() {
   const supportLink = isModerator ? "/moderation/messaging" : "/support";
 
   return (
-    <header className="px-4 lg:px-6 h-14 flex items-center bg-white text-zinc-900 border-b">
+    <header className="px-4 lg:px-6 h-14 flex items-center bg-[#f5f2e9] text-zinc-900 border-b">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
         <span className="font-bold text-primary">VenteDémo</span>
         <Handshake className="h-6 w-6 text-red-600" />

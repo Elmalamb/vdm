@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator, hasUnreadSupportMessages, hasUnreadMessages } = useAuth();
+  const { user, loading, isModerator } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -117,9 +117,6 @@ export function Header() {
     }
   };
   
-  const messagesLink = isModerator ? "/moderation/messaging" : "/my-messages";
-  const shouldShowNotification = isModerator ? hasUnreadSupportMessages : hasUnreadMessages;
-
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-blue-950 text-white border-b sticky top-0 z-20">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
@@ -145,17 +142,6 @@ export function Header() {
                     </Button>
                   </>
                 )}
-                 <Link href={messagesLink}>
-                    <Button variant="ghost" size="icon" className="relative">
-                        <MessageSquare className="h-4 w-4" />
-                        {shouldShowNotification && (
-                        <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                        </span>
-                        )}
-                    </Button>
-                 </Link>
                 <Button variant="ghost" size="icon" onClick={handleLogout}>
                   <LogOut className="h-4 w-4" />
                 </Button>

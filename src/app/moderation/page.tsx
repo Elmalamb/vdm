@@ -8,8 +8,9 @@ import { Loader2, Eye, Check, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { collection, getDocs, query, type DocumentData, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, getDocs, query, type DocumentData, doc, updateDoc } from "firebase/firestore";
+import { db, functions } from "@/lib/firebase";
+import { httpsCallable } from "firebase/functions";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -84,9 +85,9 @@ export default function ModerationDashboardPage() {
   };
 
   const handleDeleteAd = async (adId: string) => {
-    const adRef = doc(db, "ads", adId);
+    const deleteAdFunction = httpsCallable(functions, 'deleteAd');
     try {
-      await deleteDoc(adRef);
+      await deleteAdFunction({ adId });
       setAds(prevAds => prevAds.filter(ad => ad.id !== adId));
       toast({
         title: "Annonce supprimée",

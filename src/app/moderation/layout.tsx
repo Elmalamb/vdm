@@ -39,6 +39,7 @@ export default function ModerationLayout({
 
   const navItems = [
     { href: "/moderation", label: "Tableau de modération" },
+    { href: "/moderation/messaging", label: "Messagerie" },
   ];
 
   return (

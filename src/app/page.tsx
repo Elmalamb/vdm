@@ -152,8 +152,8 @@ export default function HomePage() {
     <>
       <div className="sticky top-14 z-10 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
+          <div className="flex flex-col md:grid md:grid-cols-3 gap-4">
+            <div className="relative w-full">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Mots-clés (ex: table, chaise)..."
@@ -162,24 +162,26 @@ export default function HomePage() {
                 className="pl-10"
               />
             </div>
-            <div className="relative">
-              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Code postal..."
-                value={postalCodeFilter}
-                onChange={(e) => setPostalCodeFilter(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="relative">
-              <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                type="number"
-                placeholder="Prix maximum..."
-                value={maxPriceFilter}
-                onChange={(e) => setMaxPriceFilter(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex gap-4 w-full md:col-span-2">
+                <div className="relative w-1/2">
+                  <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Code postal..."
+                    value={postalCodeFilter}
+                    onChange={(e) => setPostalCodeFilter(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="relative w-1/2">
+                  <CircleDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="number"
+                    placeholder="Prix maximum..."
+                    value={maxPriceFilter}
+                    onChange={(e) => setMaxPriceFilter(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
             </div>
           </div>
         </div>

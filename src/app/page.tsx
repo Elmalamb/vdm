@@ -13,6 +13,7 @@ import { db } from '@/lib/firebase';
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const router = useRouter();
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -34,8 +35,12 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
     }
   }
 
+  const handleCardClick = () => {
+    router.push(`/ad/${ad.id}`);
+  };
+
   return (
-     <Card className="overflow-hidden relative aspect-square group bg-black">
+     <Card className="overflow-hidden relative aspect-square group bg-black cursor-pointer" onClick={handleCardClick}>
        {ad.videoUrl ? (
           <video
             ref={videoRef}
@@ -68,21 +73,23 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
            </div>
            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
             <div className="flex justify-between items-end">
-               <div>
+               <div className="min-w-0">
                  <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
                  <div className="flex items-center gap-1 text-sm text-gray-300">
                     <MapPin className="w-4 h-4" />
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                <a
-                  href={`mailto:${ad.userEmail}?subject=Réponse à votre annonce: ${encodeURIComponent(ad.title)}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20"
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/ad/${ad.id}/contact`);
+                  }}
+                  className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"
                   aria-label="Contacter le vendeur"
                 >
                   <Mail className="w-6 h-6" />
-                </a>
+                </button>
              </div>
            </div>
          </>

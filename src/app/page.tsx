@@ -7,13 +7,16 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, PlayCircle, MapPin, Mail, Search, CircleDollarSign } from 'lucide-react';
-import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type DocumentData, getDocs, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -38,6 +41,48 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   const handleCardClick = () => {
     router.push(`/ad/${ad.id}`);
   };
+  
+  const handleContactSeller = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      toast({ title: "Connexion requise", description: "Vous devez être connecté pour contacter un vendeur.", variant: "destructive"});
+      return;
+    }
+
+    if (user.uid === ad.userId) {
+      toast({ title: "C'est votre annonce", description: "Vous ne pouvez pas vous envoyer de message.", variant: "destructive" });
+      return;
+    }
+
+    const conversationId = [user.uid, ad.userId, ad.id].sort().join('_');
+    const conversationRef = doc(db, 'conversations', conversationId);
+    
+    try {
+      const docSnap = await getDocs(query(collection(db, 'conversations'), where('id', '==', conversationId)));
+
+      if (docSnap.empty) {
+        await setDoc(conversationRef, {
+          id: conversationId,
+          adId: ad.id,
+          adTitle: ad.title,
+          sellerId: ad.userId,
+          sellerEmail: ad.userEmail,
+          buyerId: user.uid,
+          buyerEmail: user.email,
+          participants: [user.uid, ad.userId],
+          lastMessage: "Conversation démarrée à propos de votre annonce.",
+          lastMessageTimestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          sellerUnread: true,
+          buyerUnread: false
+        });
+      }
+      router.push('/my-messages');
+    } catch (error) {
+      console.error("Erreur lors de la création de la conversation:", error);
+      toast({ title: "Erreur", description: "Impossible de démarrer la conversation.", variant: "destructive" });
+    }
+  };
 
   return (
      <Card className="overflow-hidden relative aspect-square group bg-black cursor-pointer" onClick={handleCardClick}>
@@ -57,13 +102,15 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
             Votre navigateur ne supporte pas la balise vidéo.
           </video>
        ) : (
-         <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
-           <span>Vidéo non disponible</span>
-         </div>
+         <img
+          src={ad.imageUrl || 'https://placehold.co/400x400.png'}
+          alt={ad.title}
+          className="w-full h-full object-cover"
+        />
        )}
        
        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={togglePlay}>
-          {!isPlaying && <PlayCircle className="w-16 h-16 text-white hidden md:block" />}
+          {!isPlaying && ad.videoUrl && <PlayCircle className="w-16 h-16 text-white hidden md:block" />}
        </div>
 
        {!isPlaying && (
@@ -81,10 +128,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                  </div>
                </div>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/ad/${ad.id}/contact`);
-                  }}
+                  onClick={handleContactSeller}
                   className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"
                   aria-label="Contacter le vendeur"
                 >

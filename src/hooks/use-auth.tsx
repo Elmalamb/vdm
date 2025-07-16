@@ -4,7 +4,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     let unsubscribe: (() => void) | undefined;
 
     if (isModerator) {
-      // Logic for moderators
+      // Logic for moderators (messaging with users)
       const supportChatsRef = collection(db, 'supportChats');
       unsubscribe = onSnapshot(supportChatsRef, async (snapshot) => {
         let hasUnread = false;
@@ -111,36 +111,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
     } else {
-       // Logic for regular users
-      const chatDocRef = doc(db, 'supportChats', user.uid);
-      unsubscribe = onSnapshot(chatDocRef, async (chatDoc) => {
-        if (!chatDoc.exists()) {
-          setHasUnreadSupportMessages(false);
-          return;
-        }
-        
-        const chatData = chatDoc.data();
-        const userLastRead = chatData.userLastRead?.toMillis() || 0;
-        
-        const messagesRef = collection(db, `supportChats/${user.uid}/messages`);
-        const q = query(messagesRef, orderBy('timestamp', 'desc'), limit(1));
-        const messagesSnapshot = await getDocs(q);
-
-        if (!messagesSnapshot.empty) {
-          const lastMessage = messagesSnapshot.docs[0].data();
-           if (lastMessage.senderId !== user.uid) {
-               const lastMessageTimestamp = lastMessage.timestamp?.toMillis() || 0;
-               setHasUnreadSupportMessages(lastMessageTimestamp > userLastRead);
-           } else {
-               setHasUnreadSupportMessages(false);
-           }
-        } else {
-            setHasUnreadSupportMessages(false);
-        }
-      }, (error) => {
-          console.error("Error in user support chat listener:", error);
-          setHasUnreadSupportMessages(false);
-      });
+       // Logic for regular users (support page) - we don't need this listener here as there's no badge for support
+       // We'll keep this empty for now, or you could add logic if you decide to show a badge for support messages to users too.
     }
 
     return () => {
@@ -160,15 +132,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         let hasUnread = false;
-        snapshot.forEach((doc) => {
+        for(const doc of snapshot.docs) {
             const data = doc.data();
-            if (data.sellerId === user.uid && data.sellerUnread) {
+            const isSeller = data.sellerId === user.uid;
+            if (isSeller && data.sellerUnread) {
                 hasUnread = true;
+                break;
             }
-            if (data.buyerId === user.uid && data.buyerUnread) {
+            const isBuyer = data.buyerId === user.uid;
+            if (isBuyer && data.buyerUnread) {
                 hasUnread = true;
+                break;
             }
-        });
+        };
         setHasUnreadMessages(hasUnread);
     }, (error) => {
         console.error("Error in conversations listener:", error);

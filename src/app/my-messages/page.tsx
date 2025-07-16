@@ -177,7 +177,7 @@ export default function MyMessagesPage() {
     if (!user) return;
 
     const conversationRef = doc(db, 'conversations', conversationId);
-    const conversationSnap = await conversationRef.get();
+    const conversationSnap = await getDoc(conversationRef);
     const conversationData = conversationSnap.data();
     
     if(!conversationData) return;

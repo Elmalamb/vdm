@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator, hasUnreadSupportMessages } = useAuth();
+  const { user, loading, isModerator, hasUnreadSupportMessages, hasUnreadMessages } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -116,8 +116,9 @@ export function Header() {
       toast({ title: "Erreur de déconnexion", variant: "destructive" });
     }
   };
-
-  const supportLink = isModerator ? "/moderation/messaging" : "/support";
+  
+  const messagesLink = isModerator ? "/moderation/messaging" : "/my-messages";
+  const shouldShowNotification = isModerator ? hasUnreadSupportMessages : hasUnreadMessages;
 
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-[#eaddc7] text-zinc-900 border-b sticky top-0 z-20">
@@ -145,9 +146,9 @@ export function Header() {
                   </>
                 )}
                  <Button asChild variant="ghost" size="icon" className="relative">
-                  <Link href={supportLink}>
-                    {isModerator ? <MessageSquare className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
-                     {hasUnreadSupportMessages && (
+                  <Link href={messagesLink}>
+                    <MessageSquare className="h-4 w-4" />
+                     {shouldShowNotification && (
                       <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>

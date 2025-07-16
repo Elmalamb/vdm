@@ -156,9 +156,6 @@ export default function MyAdsPage() {
        <Card className="mb-8">
          <CardHeader>
            <CardTitle>Mes Annonces Actives</CardTitle>
-           <CardDescription>
-             Voici la liste de vos annonces qui ont été approuvées et qui sont visibles par les autres utilisateurs.
-           </CardDescription>
          </CardHeader>
        </Card>
 

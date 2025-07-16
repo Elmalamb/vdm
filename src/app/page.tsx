@@ -43,7 +43,6 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   
   const handleContactSeller = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Cette fonction est maintenant uniquement pour les utilisateurs non connectés.
     const subject = encodeURIComponent(`À propos de votre annonce : "${ad.title}"`);
     window.location.href = `mailto:${ad.userEmail}?subject=${subject}`;
   };
@@ -91,7 +90,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                {!user && (
+                {user?.uid !== ad.userId && (
                   <button
                     onClick={handleContactSeller}
                     className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"

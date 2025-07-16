@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function HomePage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -14,6 +15,7 @@ export default function HomePage() {
   const [showSettings, setShowSettings] = useState(true);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -59,19 +61,26 @@ export default function HomePage() {
         if ('wakeLock' in navigator) {
           wakeLockRef.current = await navigator.wakeLock.request("screen");
           setIsScreenOn(true);
-          console.log("Screen Wake Lock is active.");
+          toast({ title: "Screen Wake Lock est actif." });
         } else {
-           console.error("Wake Lock API not supported.");
+           toast({ title: "Wake Lock API non supportée", variant: "destructive" });
+           setIsScreenOn(false);
         }
       } catch (err: any) {
         console.error(`${err.name}, ${err.message}`);
+        toast({
+          title: "Permission refusée",
+          description: "Impossible d'activer le Wake Lock. L'environnement ne le permet pas.",
+          variant: "destructive"
+        });
+        setIsScreenOn(false);
       }
     } else {
       if (wakeLockRef.current) {
         await wakeLockRef.current.release();
         wakeLockRef.current = null;
         setIsScreenOn(false);
-        console.log("Screen Wake Lock released.");
+        toast({ title: "Screen Wake Lock a été désactivé." });
       }
     }
   };

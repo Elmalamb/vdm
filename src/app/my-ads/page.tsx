@@ -151,7 +151,7 @@ export default function MyAdsPage() {
 
   return (
     <div className="container mx-auto py-8">
-       <h1 className="text-2xl font-semibold tracking-tight mb-8">Mes Annonces Actives</h1>
+       <h1 className="text-2xl font-semibold tracking-tight mb-8">{user?.email}</h1>
 
       {ads.length === 0 ? (
         <div className="text-center py-16">

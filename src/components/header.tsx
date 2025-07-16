@@ -121,9 +121,9 @@ export function Header() {
   const shouldShowNotification = isModerator ? hasUnreadSupportMessages : hasUnreadMessages;
 
   return (
-    <header className="px-4 lg:px-6 h-14 flex items-center bg-[#eaddc7] text-zinc-900 border-b sticky top-0 z-20">
+    <header className="px-4 lg:px-6 h-14 flex items-center bg-blue-950 text-white border-b sticky top-0 z-20">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
-        <span className="font-bold text-primary">VenteDémo</span>
+        <span className="font-bold text-white">VenteDémo</span>
         <Handshake className="h-6 w-6 text-red-600" />
       </Link>
       <nav className="ml-auto flex gap-4 sm:gap-6">

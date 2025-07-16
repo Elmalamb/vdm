@@ -133,6 +133,11 @@ export function Header() {
                 {!isModerator && (
                   <>
                     <Button asChild variant="ghost" size="icon">
+                       <Link href="/my-ads">
+                          <LayoutList className="h-4 w-4" />
+                       </Link>
+                    </Button>
+                    <Button asChild variant="ghost" size="icon">
                        <Link href="/submit-ad">
                           <Plus className="h-4 w-4" />
                        </Link>

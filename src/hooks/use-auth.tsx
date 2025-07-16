@@ -3,8 +3,8 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { auth, db, serverTimestamp } from '@/lib/firebase';
+import { doc, onSnapshot, collection, query, where, getDocs, orderBy, limit, getDoc, setDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +20,23 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const createUserDocumentIfNeeded = async (user: User) => {
+    const userDocRef = doc(db, "users", user.uid);
+    const userDoc = await getDoc(userDocRef);
+    if (!userDoc.exists()) {
+        try {
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                email: user.email,
+                role: "membre", // Rôle par défaut
+                createdAt: serverTimestamp(),
+            });
+        } catch (error) {
+            console.error("Error creating user document:", error);
+        }
+    }
+};
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +45,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser && firebaseUser.emailVerified) {
+        await createUserDocumentIfNeeded(firebaseUser);
         setUser(firebaseUser);
       } else {
         setUser(null);

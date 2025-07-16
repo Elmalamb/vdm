@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, Package2, Plus, LogOut, MessageSquare } from 'lucide-react';
+import { LogIn, Plus, LogOut, MessageSquare, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator, hasUnreadMessages, hasUnreadSupportMessages } = useAuth();
+  const { user, loading, isModerator, hasUnreadSupportMessages } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -122,8 +122,8 @@ export function Header() {
   return (
     <header className="px-4 lg:px-6 h-14 flex items-center bg-background border-b">
       <Link href="/" className="flex items-center justify-center gap-2" prefetch={false}>
-        <Package2 className="h-6 w-6" />
-        <span className="font-bold">Le Vide Noir</span>
+        <Handshake className="h-6 w-6" />
+        <span className="font-bold">Ventedemo</span>
       </Link>
       <nav className="ml-auto flex gap-4 sm:gap-6">
         {!loading && (

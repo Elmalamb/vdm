@@ -5,7 +5,7 @@ import { Header } from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth';
 
 export const metadata: Metadata = {
-  title: 'Le Vide Noir',
+  title: 'Ventedemo',
   description: 'Un espace épuré pour vos annonces.',
 };
 

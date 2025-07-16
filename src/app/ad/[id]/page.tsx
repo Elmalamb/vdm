@@ -66,48 +66,87 @@ export default function AdDetailPage() {
     )
   }
 
+  const ModeratorAdView = () => (
+    <Card>
+      <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-1">
+          {adDetails.videoUrl ? (
+            <AspectRatio ratio={1 / 1}>
+              <video
+                src={adDetails.videoUrl}
+                controls
+                className="w-full h-full object-cover rounded-md bg-black"
+                poster={adDetails.imageUrl}
+              >
+                Votre navigateur ne supporte pas la balise vidéo.
+              </video>
+            </AspectRatio>
+          ) : (
+            <AspectRatio ratio={1 / 1}>
+              <img
+                src={adDetails.imageUrl || 'https://placehold.co/400x400.png'}
+                alt={adDetails.title}
+                className="rounded-md object-cover w-full h-full"
+                data-ai-hint={adDetails.dataAiHint || 'image produit'}
+              />
+            </AspectRatio>
+          )}
+        </div>
+        <div className="md:col-span-1 flex flex-col justify-center">
+            <CardTitle className="text-2xl font-bold leading-tight mb-2">{adDetails.title}</CardTitle>
+            <CardDescription>Code Postal: {adDetails.postalCode}</CardDescription>
+            <p className="text-3xl font-extrabold mt-4">{adDetails.price}€</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const UserAdView = () => (
+     <Card>
+        {adDetails.videoUrl ? (
+        <div className="relative">
+            <AspectRatio ratio={1 / 1} className="overflow-hidden rounded-lg">
+            <video
+                src={adDetails.videoUrl}
+                controls
+                className="w-full h-full object-cover bg-black"
+                poster={adDetails.imageUrl}
+            >
+                Votre navigateur ne supporte pas la balise vidéo.
+            </video>
+            </AspectRatio>
+            <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+            <CardTitle className="text-3xl font-bold leading-tight text-white shadow-lg">{adDetails.title}</CardTitle>
+            <CardDescription className="text-gray-200 shadow-lg">Code Postal: {adDetails.postalCode}</CardDescription>
+            <p className="text-4xl font-extrabold mt-4 text-white shadow-lg">{adDetails.price}€</p>
+            </div>
+        </div>
+        ) : (
+            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-1">
+                <AspectRatio ratio={1 / 1}>
+                    <img
+                    src={adDetails.imageUrl || 'https://placehold.co/400x400.png'}
+                    alt={adDetails.title}
+                    className="rounded-md object-cover w-full h-full"
+                    data-ai-hint={adDetails.dataAiHint || 'image produit'}
+                    />
+                </AspectRatio>
+            </div>
+            <div className="md:col-span-1 flex flex-col justify-center">
+                <CardTitle className="text-2xl font-bold leading-tight mb-2">{adDetails.title}</CardTitle>
+                <CardDescription>Code Postal: {adDetails.postalCode}</CardDescription>
+                <p className="text-3xl font-extrabold mt-4">{adDetails.price}€</p>
+            </div>
+        </CardContent>
+        )}
+    </Card>
+  );
+
   return (
     <div className="container mx-auto py-8 flex justify-center">
       <div className={cn("w-full", isModerator ? "max-w-2xl" : "max-w-4xl")}>
-        <Card>
-          {adDetails.videoUrl ? (
-            <div className="relative">
-              <AspectRatio ratio={1 / 1} className="overflow-hidden rounded-lg">
-                <video
-                  src={adDetails.videoUrl}
-                  controls
-                  className="w-full h-full object-cover bg-black"
-                  poster={adDetails.imageUrl}
-                >
-                  Votre navigateur ne supporte pas la balise vidéo.
-                </video>
-              </AspectRatio>
-              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-                <CardTitle className="text-3xl font-bold leading-tight text-white shadow-lg">{adDetails.title}</CardTitle>
-                <CardDescription className="text-gray-200 shadow-lg">Code Postal: {adDetails.postalCode}</CardDescription>
-                <p className="text-4xl font-extrabold mt-4 text-white shadow-lg">{adDetails.price}€</p>
-              </div>
-            </div>
-          ) : (
-             <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-1">
-                   <AspectRatio ratio={1 / 1}>
-                     <img
-                        src={adDetails.imageUrl || 'https://placehold.co/400x400.png'}
-                        alt={adDetails.title}
-                        className="rounded-md object-cover w-full h-full"
-                        data-ai-hint={adDetails.dataAiHint || 'image produit'}
-                      />
-                   </AspectRatio>
-                </div>
-                <div className="md:col-span-1 flex flex-col justify-center">
-                  <CardTitle className="text-2xl font-bold leading-tight mb-2">{adDetails.title}</CardTitle>
-                  <CardDescription>Code Postal: {adDetails.postalCode}</CardDescription>
-                  <p className="text-3xl font-extrabold mt-4">{adDetails.price}€</p>
-                </div>
-            </CardContent>
-          )}
-        </Card>
+        {isModerator ? <ModeratorAdView /> : <UserAdView />}
       </div>
     </div>
   );

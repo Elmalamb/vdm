@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Loader2, PlayCircle, MapPin, Mail, Search, CircleDollarSign } from 'lucide-react';
-import { collection, onSnapshot, query, where, type DocumentData, getDocs, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,8 +16,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const router = useRouter();
   const { user } = useAuth();
-  const { toast } = useToast();
-
+  
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
@@ -42,47 +41,11 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
     router.push(`/ad/${ad.id}`);
   };
   
-  const handleContactSeller = async (e: React.MouseEvent) => {
+  const handleContactSeller = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      const subject = encodeURIComponent(`À propos de votre annonce : "${ad.title}"`);
-      window.location.href = `mailto:${ad.userEmail}?subject=${subject}`;
-      return;
-    }
-
-    if (user.uid === ad.userId) {
-      toast({ title: "C'est votre annonce", description: "Vous ne pouvez pas vous envoyer de message.", variant: "destructive" });
-      return;
-    }
-
-    const conversationId = [user.uid, ad.userId, ad.id].sort().join('_');
-    const conversationRef = doc(db, 'conversations', conversationId);
-    
-    try {
-      const docSnap = await getDoc(conversationRef);
-
-      if (!docSnap.exists()) {
-        await setDoc(conversationRef, {
-          id: conversationId,
-          adId: ad.id,
-          adTitle: ad.title,
-          sellerId: ad.userId,
-          sellerEmail: ad.userEmail,
-          buyerId: user.uid,
-          buyerEmail: user.email,
-          participants: [user.uid, ad.userId],
-          lastMessage: "Conversation démarrée à propos de votre annonce.",
-          lastMessageTimestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          sellerUnread: true,
-          buyerUnread: false
-        });
-      }
-      router.push('/my-messages');
-    } catch (error) {
-      console.error("Erreur lors de la création de la conversation:", error);
-      toast({ title: "Erreur", description: "Impossible de démarrer la conversation.", variant: "destructive" });
-    }
+    // Cette fonction est maintenant uniquement pour les utilisateurs non connectés.
+    const subject = encodeURIComponent(`À propos de votre annonce : "${ad.title}"`);
+    window.location.href = `mailto:${ad.userEmail}?subject=${subject}`;
   };
 
   return (
@@ -128,11 +91,11 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
                     <span>{ad.postalCode}</span>
                  </div>
                </div>
-                {(!user || user.uid !== ad.userId) && (
+                {!user && (
                   <button
                     onClick={handleContactSeller}
                     className="inline-flex items-center justify-center h-10 w-10 rounded-md text-white hover:bg-white/20 shrink-0"
-                    aria-label="Contacter le vendeur"
+                    aria-label="Contacter le vendeur par e-mail"
                   >
                     <Mail className="w-6 h-6" />
                   </button>

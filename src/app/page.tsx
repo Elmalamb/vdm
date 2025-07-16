@@ -58,7 +58,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
        )}
        
        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer" onClick={togglePlay}>
-          {!isPlaying && <PlayCircle className="w-16 h-16 text-white" />}
+          {!isPlaying && <PlayCircle className="w-16 h-16 text-white hidden md:block" />}
        </div>
 
        {!isPlaying && (

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { LogIn, Plus, LogOut, MessageSquare, Handshake, LayoutList } from 'lucide-react';
+import { LogIn, LogOut, MessageSquare, Handshake, LayoutList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -137,11 +137,6 @@ export function Header() {
                         <LayoutList className="h-4 w-4" />
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" size="icon">
-                      <Link href="/submit-ad">
-                        <Plus className="h-4 w-4" />
-                      </Link>
-                    </Button>
                   </>
                 )}
                 <Button asChild variant="outline" size="icon" className="relative">
@@ -169,6 +164,7 @@ export function Header() {
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle className="sr-only">Authentification</DialogTitle>
+
                     <DialogDescription className="sr-only">
                       Choisissez votre méthode préférée pour vous connecter ou créer un compte.
                     </DialogDescription>

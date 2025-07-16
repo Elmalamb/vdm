@@ -79,11 +79,6 @@ export default function MyAdsPage() {
             <CardTitle>Mes Annonces</CardTitle>
             <CardDescription>Gérez et suivez l'état de vos annonces publiées.</CardDescription>
           </div>
-           <Button asChild>
-              <Link href="/submit-ad">
-                <PlusCircle className="mr-2 h-4 w-4" /> Créer une annonce
-              </Link>
-            </Button>
         </CardHeader>
         <CardContent>
           {ads.length === 0 ? (

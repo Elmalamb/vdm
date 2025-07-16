@@ -20,7 +20,6 @@ import { doc, getDoc, updateDoc, type DocumentData } from 'firebase/firestore';
 
 const adEditSchema = z.object({
   title: z.string().min(5, { message: "Le titre doit contenir au moins 5 caractères." }),
-  price: z.coerce.number().positive({ message: "Le prix doit être un nombre positif." }),
   postalCode: z.string().regex(/^\d{5}$/, { message: "Le code postal doit contenir 5 chiffres." }),
 });
 
@@ -62,7 +61,6 @@ export default function EditAdPage() {
           setAd(adData);
           form.reset({
             title: adData.title,
-            price: adData.price,
             postalCode: adData.postalCode,
           });
         } else {
@@ -86,7 +84,6 @@ export default function EditAdPage() {
       const adRef = doc(db, 'ads', adId);
       await updateDoc(adRef, {
         title: data.title,
-        price: data.price,
         postalCode: data.postalCode,
       });
       toast({ title: "Annonce mise à jour avec succès!" });
@@ -130,35 +127,20 @@ export default function EditAdPage() {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prix</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Prix (€)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="postalCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Code Postal</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Code Postal" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
+              <FormField
+                control={form.control}
+                name="postalCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Code Postal</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Code Postal" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Mettre à jour

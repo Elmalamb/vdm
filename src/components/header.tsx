@@ -39,7 +39,7 @@ const signupSchema = z.object({
 
 export function Header() {
   const { toast } = useToast();
-  const { user, loading, isModerator, hasUnreadSupportMessages } = useAuth();
+  const { user, loading, isModerator } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
@@ -129,17 +129,7 @@ export function Header() {
             {user ? (
               <>
                 {isModerator ? (
-                   <Button asChild variant="ghost" size="icon" className="relative">
-                     <Link href="/moderation/messaging">
-                       <MessageSquare className="h-4 w-4" />
-                       {hasUnreadSupportMessages && (
-                         <span className="absolute top-1 right-1 flex h-2 w-2">
-                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                           <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-500"></span>
-                         </span>
-                       )}
-                     </Link>
-                   </Button>
+                   null
                 ) : (
                   <>
                     <Button asChild variant="ghost" size="icon">

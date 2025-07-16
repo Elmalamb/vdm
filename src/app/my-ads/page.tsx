@@ -81,7 +81,7 @@ export default function MyAdsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {ads.length === 0 ? (
+          {!loading && ads.length === 0 ? (
              <div className="text-center py-12 border-2 border-dashed rounded-lg">
                 <PlusCircle className="mx-auto h-12 w-12 text-muted-foreground" />
                 <h3 className="mt-4 text-lg font-medium">Vous n'avez aucune annonce</h3>

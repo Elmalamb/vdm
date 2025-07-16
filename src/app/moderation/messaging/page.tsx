@@ -18,6 +18,8 @@ interface Conversation {
   userId: string;
   userEmail: string;
   hasUnread?: boolean;
+  assignedModeratorId?: string;
+  assignedModeratorEmail?: string;
 }
 
 interface Message {
@@ -27,12 +29,16 @@ interface Message {
   timestamp: Timestamp;
 }
 
-const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessage: (userId: string, message: string) => Promise<void> }) => {
+const ChatInterface = ({ userId, conversation, onSendMessage }: { userId: string, conversation: Conversation | null, onSendMessage: (userId: string, message: string, isAssigning: boolean) => Promise<void> }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const isAssignedToCurrentUser = conversation?.assignedModeratorId === user?.uid;
+  const isUnassigned = !conversation?.assignedModeratorId;
+  const canInteract = isUnassigned || isAssignedToCurrentUser;
 
   useEffect(() => {
     if (!userId) return;
@@ -55,17 +61,22 @@ const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessag
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !user || !userId) return;
-    await onSendMessage(userId, newMessage);
+    if (newMessage.trim() === '' || !user || !userId || !canInteract) return;
+    const isAssigning = isUnassigned;
+    await onSendMessage(userId, newMessage, isAssigning);
     setNewMessage('');
   };
   
-  if (!userId) return null;
+  if (!userId || !conversation) return null;
 
   return (
     <Card className="flex flex-col h-[584px]">
       <CardHeader>
         <CardTitle>Conversation</CardTitle>
+        <CardDescription>
+          {isUnassigned && "Cette conversation n'est pas encore assignée."}
+          {conversation.assignedModeratorId && `Assignée à: ${conversation.assignedModeratorEmail}`}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 bg-muted/50 rounded-md mb-4 relative min-h-0">
@@ -90,10 +101,10 @@ const ChatInterface = ({ userId, onSendMessage }: { userId: string, onSendMessag
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Écrire un message..."
-            disabled={loadingMessages}
+            placeholder={canInteract ? "Écrire un message..." : "Conversation assignée à un autre modérateur."}
+            disabled={loadingMessages || !canInteract}
           />
-          <Button type="submit" size="icon" disabled={loadingMessages}>
+          <Button type="submit" size="icon" disabled={loadingMessages || !canInteract}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
@@ -108,6 +119,21 @@ export default function MessagingPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const moderatorEmails = useRef<Map<string, string>>(new Map());
+
+  const fetchModeratorEmail = async (uid: string) => {
+    if (moderatorEmails.current.has(uid)) {
+      return moderatorEmails.current.get(uid);
+    }
+    const userDocRef = doc(db, 'users', uid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      const email = userDoc.data().email || "Modérateur inconnu";
+      moderatorEmails.current.set(uid, email);
+      return email;
+    }
+    return "Modérateur inconnu";
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -136,11 +162,18 @@ export default function MessagingPage() {
                 }
             }
         }
+        
+        let assignedModeratorEmail = undefined;
+        if (chatData.assignedModeratorId) {
+          assignedModeratorEmail = await fetchModeratorEmail(chatData.assignedModeratorId);
+        }
   
         convos.push({
           userId: chatDoc.id,
           userEmail: userEmail,
           hasUnread: hasUnread,
+          assignedModeratorId: chatData.assignedModeratorId,
+          assignedModeratorEmail: assignedModeratorEmail,
         });
       }
       
@@ -151,16 +184,25 @@ export default function MessagingPage() {
     return () => unsubscribe();
   }, [user]);
 
-  const handleSendMessage = async (userId: string, message: string) => {
+  const handleSendMessage = async (userId: string, message: string, isAssigning: boolean) => {
     if (!user) return;
+    const chatDocRef = doc(db, 'supportChats', userId);
+    
     await addDoc(collection(db, `supportChats/${userId}/messages`), {
       text: message,
       senderId: user.uid,
       timestamp: serverTimestamp(),
     });
-     await updateDoc(doc(db, 'supportChats', userId), {
+    
+    const updateData: DocumentData = {
       moderatorLastRead: serverTimestamp(),
-    });
+    };
+
+    if (isAssigning) {
+      updateData.assignedModeratorId = user.uid;
+    }
+
+    await updateDoc(chatDocRef, updateData);
   };
 
   const handleConversationOpened = async (userId: string) => {
@@ -174,6 +216,8 @@ export default function MessagingPage() {
 
     setConversations(prev => prev.map(c => c.userId === userId ? {...c, hasUnread: false} : c));
   };
+  
+  const selectedConversation = conversations.find(c => c.userId === selectedUserId) || null;
 
   if(loading){
      return (
@@ -190,6 +234,7 @@ export default function MessagingPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Utilisateur</TableHead>
+              <TableHead>Modérateur</TableHead>
               <TableHead>Statut</TableHead>
             </TableRow>
           </TableHeader>
@@ -201,6 +246,7 @@ export default function MessagingPage() {
                 className="cursor-pointer"
               >
                 <TableCell className={conv.hasUnread ? 'font-bold' : ''}>{conv.userEmail}</TableCell>
+                <TableCell>{conv.assignedModeratorEmail || 'Non assignée'}</TableCell>
                  <TableCell>
                   {conv.hasUnread && <Badge variant="destructive">Nouveau message</Badge>}
                 </TableCell>
@@ -211,7 +257,11 @@ export default function MessagingPage() {
       </div>
        <div>
         {selectedUserId ? (
-          <ChatInterface userId={selectedUserId} onSendMessage={handleSendMessage} />
+          <ChatInterface 
+            userId={selectedUserId} 
+            conversation={selectedConversation}
+            onSendMessage={handleSendMessage} 
+          />
         ) : (
           <Card className="flex items-center justify-center h-[584px]">
             <CardContent>

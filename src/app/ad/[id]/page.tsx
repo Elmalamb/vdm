@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { doc, getDoc, DocumentData, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
+import { cn } from '@/lib/utils';
 
 export default function AdDetailPage() {
   const { user, isModerator, loading: authLoading } = useAuth();
@@ -36,7 +37,7 @@ export default function AdDetailPage() {
              setAdDetails(null);
           } else {
             setAdDetails(adData);
-            if(adData.status === 'approved') {
+            if(adData.status === 'approved' && user && adData.userId !== user.uid) {
                  await updateDoc(adRef, { views: increment(1) });
             }
           }
@@ -47,7 +48,7 @@ export default function AdDetailPage() {
       };
       fetchAdDetails();
     }
-  }, [adId, isModerator]);
+  }, [adId, isModerator, user]);
 
   if (authLoading || loading) {
     return (
@@ -67,7 +68,7 @@ export default function AdDetailPage() {
 
   return (
     <div className="container mx-auto py-8 flex justify-center">
-      <div className="w-full max-w-4xl">
+      <div className={cn("w-full", isModerator ? "max-w-2xl" : "max-w-4xl")}>
         <Card>
           {adDetails.videoUrl ? (
             <div className="relative">

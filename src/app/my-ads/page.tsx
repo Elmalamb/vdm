@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, PlayCircle, MapPin, Mail, Eye } from 'lucide-react';
-import { collection, onSnapshot, query, where, type DocumentData } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, type DocumentData, type Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Link from 'next/link';
 
@@ -109,6 +109,8 @@ export default function MyAdsPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
+    let unsubscribe: Unsubscribe | undefined;
+
     if (user) {
       setLoading(true);
       const q = query(
@@ -116,7 +118,7 @@ export default function MyAdsPage() {
         where("userId", "==", user.uid),
         where("status", "==", "approved")
       );
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      unsubscribe = onSnapshot(q, (querySnapshot) => {
         const adsData: DocumentData[] = [];
         querySnapshot.forEach((doc) => {
           adsData.push({ id: doc.id, ...doc.data() });
@@ -127,9 +129,18 @@ export default function MyAdsPage() {
         console.error("Erreur Firestore:", error);
         setLoading(false);
       });
-
-      return () => unsubscribe();
+    } else {
+      // Si l'utilisateur n'est pas connecté, s'assurer que l'état de chargement est faux et la liste d'annonces est vide.
+      setAds([]);
+      setLoading(false);
     }
+
+    // Nettoyer l'abonnement en se déconnectant
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [user]);
 
   if (authLoading || loading) {

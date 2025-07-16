@@ -47,7 +47,7 @@ export default function SubmitAdPage() {
     resolver: zodResolver(adSchema),
     defaultValues: {
       title: "",
-      price: 0,
+      price: undefined,
       postalCode: "",
     },
   });

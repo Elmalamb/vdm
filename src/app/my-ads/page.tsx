@@ -4,11 +4,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, PlayCircle, MapPin, Mail, Eye } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Loader2, PlayCircle, MapPin } from 'lucide-react';
 import { collection, onSnapshot, query, where, type DocumentData, type Unsubscribe } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import Link from 'next/link';
+import { Eye } from 'lucide-react';
 
 const AdCard = ({ ad }: { ad: DocumentData }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -130,12 +130,10 @@ export default function MyAdsPage() {
         setLoading(false);
       });
     } else {
-      // Si l'utilisateur n'est pas connecté, s'assurer que l'état de chargement est faux et la liste d'annonces est vide.
       setAds([]);
       setLoading(false);
     }
 
-    // Nettoyer l'abonnement en se déconnectant
     return () => {
       if (unsubscribe) {
         unsubscribe();
@@ -153,11 +151,7 @@ export default function MyAdsPage() {
 
   return (
     <div className="container mx-auto py-8">
-       <Card className="mb-8">
-         <CardHeader>
-           <CardTitle>Mes Annonces Actives</CardTitle>
-         </CardHeader>
-       </Card>
+       <h1 className="text-2xl font-semibold tracking-tight mb-8">Mes Annonces Actives</h1>
 
       {ads.length === 0 ? (
         <div className="text-center py-16">

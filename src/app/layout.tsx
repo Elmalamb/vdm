@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth';
 import { Footer } from '@/components/footer';
+import { FloatingSupportButton } from '@/components/floating-support-button';
 
 export const metadata: Metadata = {
   title: 'VenteDémo',
@@ -28,6 +29,7 @@ export default function RootLayout({
             <Header />
             <main className="flex-1 flex flex-col pb-16">{children}</main>
             <Footer />
+            <FloatingSupportButton />
           </div>
           <Toaster />
         </AuthProvider>

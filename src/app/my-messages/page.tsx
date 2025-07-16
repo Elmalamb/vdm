@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, serverTimestamp } from '@/lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, type DocumentData, type Timestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -70,9 +70,9 @@ const ChatInterface = ({ conversationId, onBack }: { conversationId: string, onB
       timestamp: serverTimestamp()
     });
 
-    const conversationSnap = await doc(db, 'conversations', conversationId).get();
+    const conversationSnap = await getDoc(conversationRef);
     const conversationData = conversationSnap.data();
-    const isSeller = user.uid === conversationData.sellerId;
+    const isSeller = user.uid === conversationData?.sellerId;
 
     await updateDoc(conversationRef, {
       lastMessage: newMessage,
@@ -85,7 +85,7 @@ const ChatInterface = ({ conversationId, onBack }: { conversationId: string, onB
   };
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-12rem)] md:h-[584px]">
+    <Card className="flex flex-col h-[calc(100vh-12rem)] md:h-[calc(100vh-16rem)]">
        <CardHeader className="flex flex-row items-center gap-4">
         <Button variant="ghost" size="icon" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
@@ -180,6 +180,8 @@ export default function MyMessagesPage() {
     const conversationSnap = await conversationRef.get();
     const conversationData = conversationSnap.data();
     
+    if(!conversationData) return;
+
     const isSeller = user.uid === conversationData.sellerId;
     
     if (isSeller && conversationData.sellerUnread) {

@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { Header } from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth';
+import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
   title: 'VenteDémo',
@@ -25,7 +26,8 @@ export default function RootLayout({
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <Header />
-            <main className="flex-1 flex flex-col">{children}</main>
+            <main className="flex-1 flex flex-col pb-16">{children}</main>
+            <Footer />
           </div>
           <Toaster />
         </AuthProvider>

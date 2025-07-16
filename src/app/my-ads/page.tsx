@@ -82,7 +82,7 @@ const AdCard = ({ ad }: { ad: DocumentData }) => {
           <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
             <div className="flex justify-between items-end">
               <div className="min-w-0">
-                <h3 className="text-sm font-normal text-white truncate">{ad.title}</h3>
+                <h3 className="text-sm font-normal text-white">{ad.title}</h3>
                 <div className="flex items-center gap-1 text-sm text-gray-300">
                   <MapPin className="w-4 h-4" />
                   <span>{ad.postalCode}</span>

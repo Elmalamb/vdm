@@ -14,6 +14,26 @@ import * as admin from "firebase-admin";
 
 admin.initializeApp();
 const db = admin.firestore();
+const storage = admin.storage();
+
+const deleteFileFromUrl = async (fileUrl: string) => {
+  if (!fileUrl) return;
+
+  try {
+    const decodedUrl = decodeURIComponent(fileUrl);
+    const pathRegex = /(?<=o\/)(.*?)(?=\?|$)/;
+    const match = decodedUrl.match(pathRegex);
+
+    if (match && match[1]) {
+      const filePath = match[1];
+      const file = storage.bucket().file(filePath);
+      await file.delete();
+      logger.info(`Successfully deleted file: ${filePath}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to delete file from URL ${fileUrl}:`, error);
+  }
+};
 
 export const deleteAd = onCall(async (request) => {
   if (!request.auth) {
@@ -43,8 +63,27 @@ export const deleteAd = onCall(async (request) => {
       );
     }
 
-    await db.collection("ads").doc(adId).delete();
-    logger.info(`Ad ${adId} successfully deleted by moderator ${uid}.`);
+    const adDocRef = db.collection("ads").doc(adId);
+    const adDoc = await adDocRef.get();
+
+    if (!adDoc.exists) {
+      throw new HttpsError("not-found", `Ad with ID ${adId} not found.`);
+    }
+
+    const adData = adDoc.data();
+
+    // Delete associated files from storage
+    if (adData?.imageUrl) {
+      await deleteFileFromUrl(adData.imageUrl);
+    }
+    if (adData?.videoUrl) {
+      await deleteFileFromUrl(adData.videoUrl);
+    }
+
+    // Delete the Firestore document
+    await adDocRef.delete();
+
+    logger.info(`Ad ${adId} and associated files successfully deleted by moderator ${uid}.`);
     return {success: true};
   } catch (error) {
     logger.error(

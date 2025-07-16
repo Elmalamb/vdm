@@ -56,7 +56,7 @@ export default function ModerationDashboardPage() {
       querySnapshot.forEach((doc) => {
         adsData.push({ id: doc.id, ...doc.data() });
       });
-      setAds(adsData);
+      setAds(adsData.filter(ad => ad.status !== 'rejected'));
       setLoading(false);
     }
 
@@ -65,14 +65,14 @@ export default function ModerationDashboardPage() {
     }
   }, [isModerator]);
 
-  const handleUpdateStatus = async (adId: string, status: 'approved' | 'rejected') => {
+  const handleUpdateStatus = async (adId: string, status: 'approved') => {
     const adRef = doc(db, "ads", adId);
     try {
       await updateDoc(adRef, { status });
       setAds(prevAds => prevAds.map(ad => ad.id === adId ? { ...ad, status } : ad));
       toast({
         title: "Statut mis à jour",
-        description: `L'annonce a été ${status === 'approved' ? 'approuvée' : 'rejetée'}.`,
+        description: `L'annonce a été approuvée.`,
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour du statut:", error);
@@ -84,14 +84,14 @@ export default function ModerationDashboardPage() {
     }
   };
 
-  const handleDeleteAd = async (adId: string) => {
+  const handleDeleteAd = async (adId: string, isRejection: boolean = false) => {
     const deleteAdFunction = httpsCallable(functions, 'deleteAd');
     try {
       await deleteAdFunction({ adId });
       setAds(prevAds => prevAds.filter(ad => ad.id !== adId));
       toast({
-        title: "Annonce supprimée",
-        description: "L'annonce a été supprimée avec succès.",
+        title: isRejection ? "Annonce rejetée" : "Annonce supprimée",
+        description: isRejection ? "L'annonce a été rejetée et supprimée." : "L'annonce a été supprimée avec succès.",
       });
     } catch (error) {
       console.error("Erreur lors de la suppression de l'annonce:", error);
@@ -119,7 +119,7 @@ export default function ModerationDashboardPage() {
             <Button variant="outline" size="icon" onClick={() => handleUpdateStatus(ad.id, 'approved')}>
               <Check className="h-4 w-4" />
             </Button>
-            <Button variant="destructive" size="icon" onClick={() => handleUpdateStatus(ad.id, 'rejected')}>
+            <Button variant="destructive" size="icon" onClick={() => handleDeleteAd(ad.id, true)}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -130,8 +130,6 @@ export default function ModerationDashboardPage() {
             <X className="h-4 w-4" />
           </Button>
         );
-      case 'rejected':
-        return <span className="text-muted-foreground text-xs">Aucune</span>;
       default:
         return null;
     }

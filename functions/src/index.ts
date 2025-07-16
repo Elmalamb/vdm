@@ -11,10 +11,31 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import { onUserCreate } from "firebase-functions/v2/auth";
 
 admin.initializeApp();
 const db = admin.firestore();
 const storage = admin.storage();
+
+export const createUserDocument = onUserCreate(async (event) => {
+  const user = event.data;
+  const { uid, email } = user;
+
+  const userDocRef = db.collection("users").doc(uid);
+
+  try {
+    await userDocRef.set({
+      uid: uid,
+      email: email,
+      role: "membre", // Rôle par défaut
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    logger.info(`User document created for ${email} (UID: ${uid})`);
+  } catch (error) {
+    logger.error(`Error creating user document for ${uid}:`, error);
+  }
+});
+
 
 const deleteFileFromUrl = async (fileUrl: string) => {
   if (!fileUrl) return;

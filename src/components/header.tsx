@@ -19,12 +19,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword, signOut, type AuthError } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 import { useState } from 'react';
-import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 const loginSchema = z.object({
@@ -94,11 +93,7 @@ export function Header() {
 
       await sendEmailVerification(user);
       
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
-        role: "membre",
-        uid: user.uid
-      });
+      // La création du document utilisateur est maintenant gérée par une Cloud Function.
 
       toast({ title: "Inscription réussie.", description: "Veuillez consulter votre boîte mail pour vérifier votre compte." });
       setIsDialogOpen(false);

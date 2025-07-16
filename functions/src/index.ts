@@ -1,3 +1,4 @@
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -95,7 +96,7 @@ export const deleteAd = onCall(async (request) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new https_1.HttpsError(
+    throw new HttpsError(
       "internal",
       "An unexpected error occurred."
     );

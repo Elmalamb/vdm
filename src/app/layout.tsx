@@ -10,7 +10,7 @@ import { FloatingSupportButton } from '@/components/floating-support-button';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'VenteDémo',
+  title: 'VenteDémo - Annonces',
   description: 'Une plateforme de démonstration pour vendre et acheter des articles.',
 };
 
